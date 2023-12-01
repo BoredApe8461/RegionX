@@ -1,0 +1,11 @@
+[workspace.package]
+authors = ["RegionX <support@regionx.tech>"]
+edition = "2021"
+repository = "https://github.com/RegionX-Labs/RegionX.git"
+license = "GPL-3.0-only"
+
+[workspace]
+members = [
+    "contracts/xc-regions",
+    "contracts/coretime-market"
+]

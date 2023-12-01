@@ -1,0 +1,98 @@
+name: RegionX tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the source code
+        uses: actions/checkout@v3
+
+      - name: Install & display rust toolchain
+        run: |
+          rustup show
+          rustup toolchain install nightly
+          rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
+          rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
+          rustup show
+
+      - name: Check targets are installed correctly
+        run: rustup target list --installed
+
+      - name: Cargo check
+        run: cargo check
+
+      - name: Check Clippy
+        run: cargo clippy
+
+  unittest:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the source code
+        uses: actions/checkout@v3
+
+      - name: Unit test
+        run: cargo test
+
+  format:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use cashed cargo
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo
+          key: ${{ runner.os }}-rust-${{ hashFiles('rust-toolchain.toml') }}
+
+      - name: Checkout the source code
+        uses: actions/checkout@v3
+
+      - name: Ensure the rust code is formatted
+        run: cargo fmt --all --check
+
+  code_coverage:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the source code
+        uses: actions/checkout@v3
+
+      - name: Run cargo-tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
+        with:
+          version: "0.21.0"
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v3.1.0
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: code-coverage-report
+          path: cobertura.xml
+
+  clippy:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use cashed cargo
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo
+          key: ${{ runner.os }}-rust-${{ hashFiles('rust-toolchain.toml') }}
+
+      - name: Checkout the source code
+        uses: actions/checkout@v3
+
+      - name: Ensure clippy is happy
+        run: cargo clippy

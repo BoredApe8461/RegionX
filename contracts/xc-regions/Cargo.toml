@@ -18,7 +18,7 @@ openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = 
 ink_e2e = "4.2.1"
 
 [lib]
-path = "lib.rs"
+path = "src/lib.rs"
 
 [features]
 default = ["std"]

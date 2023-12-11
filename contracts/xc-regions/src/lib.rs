@@ -16,8 +16,13 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![feature(min_specialization)]
 
+mod fixed_metadata_extension;
+mod region;
+
 #[openbrush::contract]
 pub mod xc_regions {
+    use crate::fixed_metadata_extension::{FixedMetadataExtension, FixedMetadataExtensionError};
+    use crate::region::RegionMetadata;
     use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
 
     #[ink(storage)]
@@ -65,6 +70,23 @@ pub mod xc_regions {
 
         #[ink(message)]
         fn total_supply(&self) -> Balance {
+            todo!()
+        }
+    }
+
+    impl FixedMetadataExtension<RegionId, RegionMetadata> for XcRegions {
+        #[ink(message)]
+        fn init(&mut self, id: Id, metadata: Metadata) -> Result<(), FixedMetadataExtensionError> {
+            todo!()
+        }
+
+        #[ink(message)]
+        fn get_metadata(&self, id: Id) -> Result<Metadata, FixedMetadataExtensionError> {
+            todo!()
+        }
+
+        #[ink(message)]
+        fn destroy(&mut self, id: Id) -> Result<(), FixedMetadataExtensionError> {
             todo!()
         }
     }

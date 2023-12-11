@@ -24,21 +24,55 @@ pub mod xc_regions {
     #[derive(Default, Storage)]
     pub struct XcRegions {
         #[storage_field]
-        psp34: psp34::Data,
-        #[storage_field]
         metadata: Data,
-        next_id: u8,
     }
 
-    //impl PSP34 for XcRegions {}
+    impl PSP34 for XcRegions {
+        #[ink(message)]
+        fn collection_id(&self) -> Id {
+            todo!()
+        }
+
+        #[ink(message)]
+        fn balance_of(&self, owner: AccountId) -> u32 {
+            todo!()
+        }
+
+        #[ink(message)]
+        fn owner_of(&self, id: Id) -> Option<AccountId> {
+            todo!()
+        }
+
+        #[ink(message)]
+        fn allowance(&self, owner: AccountId, operator: AccountId, id: Option<Id>) -> bool {
+            todo!()
+        }
+
+        #[ink(message)]
+        fn approve(
+            &mut self,
+            operator: AccountId,
+            id: Option<Id>,
+            approved: bool,
+        ) -> Result<(), PSP34Error> {
+            todo!()
+        }
+
+        #[ink(message)]
+        fn transfer(&mut self, to: AccountId, id: Id, data: Vec<u8>) -> Result<(), PSP34Error> {
+            todo!()
+        }
+
+        #[ink(message)]
+        fn total_supply(&self) -> Balance {
+            todo!()
+        }
+    }
 
     impl XcRegions {
         #[ink(constructor)]
         pub fn new() -> Self {
             Default::default()
         }
-
-        #[ink(message)]
-        pub fn foo(&self) {}
     }
 }

@@ -16,13 +16,14 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![feature(min_specialization)]
 
-mod fixed_metadata_extension;
-mod region;
+mod traits;
+mod types;
 
 #[openbrush::contract]
 pub mod xc_regions {
-    use crate::fixed_metadata_extension::{FixedMetadataExtension, FixedMetadataExtensionError};
-    use crate::region::RegionMetadata;
+    use crate::traits::regionmetadata_external;
+    use crate::traits::{RegionMetadata, RegionMetadataError};
+    use crate::types::*;
     use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
 
     #[ink(storage)]
@@ -74,19 +75,19 @@ pub mod xc_regions {
         }
     }
 
-    impl FixedMetadataExtension<RegionId, RegionMetadata> for XcRegions {
+    impl RegionMetadata for XcRegions {
         #[ink(message)]
-        fn init(&mut self, id: Id, metadata: Metadata) -> Result<(), FixedMetadataExtensionError> {
+        fn init(&mut self, id: RegionId, metadata: Region) -> Result<(), RegionMetadataError> {
             todo!()
         }
 
         #[ink(message)]
-        fn get_metadata(&self, id: Id) -> Result<Metadata, FixedMetadataExtensionError> {
+        fn get_metadata(&self, id: RegionId) -> Result<Region, RegionMetadataError> {
             todo!()
         }
 
         #[ink(message)]
-        fn destroy(&mut self, id: Id) -> Result<(), FixedMetadataExtensionError> {
+        fn destroy(&mut self, id: RegionId) -> Result<(), RegionMetadataError> {
             todo!()
         }
     }

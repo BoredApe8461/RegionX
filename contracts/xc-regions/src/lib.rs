@@ -22,15 +22,15 @@ mod types;
 #[openbrush::contract]
 pub mod xc_regions {
     use crate::traits::regionmetadata_external;
-    use crate::traits::{RegionMetadata, RegionMetadataError};
-    use crate::types::*;
+    use crate::traits::{NonFungiblesInspect, RegionMetadata, RegionMetadataError};
+    use crate::types::{Region, RegionId};
+    use ink::storage::Mapping;
     use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
 
     #[ink(storage)]
     #[derive(Default, Storage)]
     pub struct XcRegions {
-        #[storage_field]
-        metadata: Data,
+        pub metadata: Mapping<RegionId, Region>,
     }
 
     impl PSP34 for XcRegions {
@@ -96,6 +96,16 @@ pub mod xc_regions {
         #[ink(constructor)]
         pub fn new() -> Self {
             Default::default()
+        }
+    }
+
+    impl NonFungiblesInspect<RegionId, AccountId> for XcRegions {
+        fn _exists(&self, id: RegionId) -> bool {
+            todo!()
+        }
+
+        fn _owned(&self, id: RegionId) -> AccountId {
+            todo!()
         }
     }
 }

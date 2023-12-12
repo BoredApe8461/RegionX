@@ -8,5 +8,6 @@ license = "GPL-3.0-only"
 members = [
     "contracts/xc-regions",
     "contracts/coretime-market", 
-    "environment",
+    "environment", 
+    "extensions/uniques-extension",
 ]

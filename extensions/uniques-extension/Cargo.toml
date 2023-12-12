@@ -1,5 +1,5 @@
 [package]
-name = "environment"
+name = "uniques-extension"
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
@@ -13,8 +13,6 @@ ink = { version = "4.2.1", default-features = false }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2.6", default-features = false, features = ["derive"], optional = true }
-
-uniques-extension = { path = "../extensions/uniques-extension" }
 
 [lib]
 path = "src/lib.rs"

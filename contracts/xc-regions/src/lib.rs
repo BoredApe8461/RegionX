@@ -19,7 +19,7 @@
 mod traits;
 mod types;
 
-#[openbrush::contract]
+#[openbrush::contract(env = environment::ExtendedEnvironment)]
 pub mod xc_regions {
     use crate::traits::regionmetadata_external;
     use crate::traits::{NonFungiblesInspect, RegionMetadata, RegionMetadataError};

@@ -13,6 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
+// The type used to identify collections in the underlying NFT pallet.
+pub type CollectionId = u32;
+// TODO: docs
 pub type RegionId = u128;
 
 pub type Timeslice = u32;
@@ -21,20 +24,14 @@ pub type Timeslice = u32;
 pub type CoreIndex = u16;
 
 #[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "std",
-    derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout)
-)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
 pub struct CoreMask([u8; 10]);
 
 #[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "std",
-    derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout)
-)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
 pub struct Region {
-    begin: Timeslice,
-    end: Timeslice,
-    core: CoreIndex,
-    mask: CoreMask,
+	begin: Timeslice,
+	end: Timeslice,
+	core: CoreIndex,
+	mask: CoreMask,
 }

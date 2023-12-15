@@ -18,21 +18,21 @@
 
 #[openbrush::contract]
 pub mod coretime_market {
-    use openbrush::traits::Storage;
+	use openbrush::traits::Storage;
 
-    #[ink(storage)]
-    #[derive(Default, Storage)]
-    pub struct CoretimeMarket {
-        foo: u8,
-    }
+	#[ink(storage)]
+	#[derive(Default, Storage)]
+	pub struct CoretimeMarket {
+		foo: u8,
+	}
 
-    impl CoretimeMarket {
-        #[ink(constructor)]
-        pub fn new() -> Self {
-            Default::default()
-        }
+	impl CoretimeMarket {
+		#[ink(constructor)]
+		pub fn new() -> Self {
+			Default::default()
+		}
 
-        #[ink(message)]
-        pub fn foo(&self) {}
-    }
+		#[ink(message)]
+		pub fn foo(&self) {}
+	}
 }

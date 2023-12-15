@@ -24,14 +24,14 @@ use ink::env::{DefaultEnvironment, Environment};
 pub enum ExtendedEnvironment {}
 
 impl Environment for ExtendedEnvironment {
-    const MAX_EVENT_TOPICS: usize = <DefaultEnvironment as Environment>::MAX_EVENT_TOPICS;
+	const MAX_EVENT_TOPICS: usize = <DefaultEnvironment as Environment>::MAX_EVENT_TOPICS;
 
-    type AccountId = <DefaultEnvironment as Environment>::AccountId;
-    type Balance = <DefaultEnvironment as Environment>::Balance;
-    type Hash = <DefaultEnvironment as Environment>::Hash;
-    type BlockNumber = <DefaultEnvironment as Environment>::BlockNumber;
-    type Timestamp = <DefaultEnvironment as Environment>::Timestamp;
+	type AccountId = <DefaultEnvironment as Environment>::AccountId;
+	type Balance = <DefaultEnvironment as Environment>::Balance;
+	type Hash = <DefaultEnvironment as Environment>::Hash;
+	type BlockNumber = <DefaultEnvironment as Environment>::BlockNumber;
+	type Timestamp = <DefaultEnvironment as Environment>::Timestamp;
 
-    // TODO: add uniques chain extension
-    type ChainExtension = Extension;
+	// TODO: add uniques chain extension
+	type ChainExtension = Extension;
 }

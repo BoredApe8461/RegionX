@@ -24,18 +24,18 @@ pub type RegionMetadataRef = dyn RegionMetadata;
 
 #[openbrush::trait_definition]
 pub trait RegionMetadata {
-    #[ink(message)]
-    fn init(&mut self, id: RegionId, metadata: Region) -> Result<(), RegionMetadataError>;
+	#[ink(message)]
+	fn init(&mut self, id: RegionId, metadata: Region) -> Result<(), RegionMetadataError>;
 
-    #[ink(message)]
-    fn get_metadata(&self, id: RegionId) -> Result<Region, RegionMetadataError>;
+	#[ink(message)]
+	fn get_metadata(&self, id: RegionId) -> Result<Region, RegionMetadataError>;
 
-    #[ink(message)]
-    fn destroy(&mut self, id: RegionId) -> Result<(), RegionMetadataError>;
+	#[ink(message)]
+	fn destroy(&mut self, id: RegionId) -> Result<(), RegionMetadataError>;
 }
 
 pub trait NonFungiblesInspect<ItemId, AccountId> {
-    fn _exists(&self, id: ItemId) -> bool;
+	fn _exists(&self, id: ItemId) -> bool;
 
-    fn _owned(&self, id: ItemId) -> AccountId;
+	fn _owned(&self, id: ItemId) -> AccountId;
 }

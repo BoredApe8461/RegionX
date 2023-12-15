@@ -9,7 +9,7 @@ license.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ink = { version = "4.2.1", default-features = false }
+ink = { version = "4.2.1", default-features = false, optional = true }
 ink_engine = { version = "4.2.1", default-features = false }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
@@ -25,12 +25,19 @@ path = "src/lib.rs"
 
 [features]
 default = ["std"]
-std = [
-    "ink/std",
-    "ink_engine/std",
-    "scale/std",
-    "scale-info/std",
-    "obce/std",
+ink = [
+    "obce/ink",
+    "dep:ink",
 ]
-ink-as-dependency = []
-e2e-tests = []
+std = [
+    "scale-info/std",
+    "scale/std",
+    "obce/std"
+]
+ink-std = [
+    "std",
+    "ink",
+    "ink/std",
+    "obce/ink-std",
+]
+

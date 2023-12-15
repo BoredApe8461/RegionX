@@ -3,12 +3,10 @@
 use scale::{Decode, Encode};
 use primitives::RegionId;
 
-/*
 #[obce::definition(id = 123)]
 pub trait UniquesExtension {
     fn collection_owner(&self, collection_id: RegionId) -> Result<(), UniquesError>;
 }
-*/
 
 //#[obce::error]
 pub enum UniquesError {

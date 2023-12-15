@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use openbrush::traits::AccountId;
 use primitives::{CollectionId, RegionId};
 use scale::{Decode, Encode};
 
@@ -12,7 +13,14 @@ use scale::{Decode, Encode};
 /// Once WASM view functions are supported, there will no longer be a need for a chain extension.
 #[obce::definition(id = 123)]
 pub trait UniquesExtension {
-	fn owner(&self, collection_id: CollectionId, item_id: RegionId) -> Result<(), UniquesError>;
+	fn owner(
+		&self,
+		collection_id: CollectionId,
+		item_id: RegionId,
+	) -> Result<AccountId, UniquesError>;
+
+	// All items owned by `who`.
+	fn owned(&self, who: AccountId) -> Result<Vec<(CollectionId, RegionId)>, UniquesError>;
 }
 
 #[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, Debug)]

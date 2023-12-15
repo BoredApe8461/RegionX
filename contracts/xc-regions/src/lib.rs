@@ -19,6 +19,9 @@
 mod traits;
 mod types;
 
+// NOTE: This should be the collection ID of the underlying region collection.
+const REGIONS_COLLECTION_ID: u32 = 42;
+
 #[openbrush::contract(env = environment::ExtendedEnvironment)]
 pub mod xc_regions {
 	use crate::{
@@ -26,9 +29,11 @@ pub mod xc_regions {
 			regionmetadata_external, NonFungiblesInspect, RegionMetadata, RegionMetadataError,
 		},
 		types::{Region, RegionId},
+		REGIONS_COLLECTION_ID,
 	};
 	use ink::{codegen::Env, storage::Mapping};
 	use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
+	use primitives::CollectionId;
 	use uniques_extension::UniquesExtension;
 
 	#[ink(storage)]
@@ -40,18 +45,25 @@ pub mod xc_regions {
 	impl PSP34 for XcRegions {
 		#[ink(message)]
 		fn collection_id(&self) -> Id {
-			todo!()
+			Id::U32(REGIONS_COLLECTION_ID)
 		}
 
 		#[ink(message)]
-		fn balance_of(&self, owner: AccountId) -> u32 {
-			todo!()
+		fn balance_of(&self, who: AccountId) -> u32 {
+			if let Ok(owned) = self.env().extension().owned(who) {
+				owned.len() as u32
+			} else {
+				0u32
+			}
 		}
 
 		#[ink(message)]
 		fn owner_of(&self, id: Id) -> Option<AccountId> {
-			//self.env().extension().owner(self.collection_id(), id);
-			todo!()
+			if let Id::U128(region_id) = id {
+				self.env().extension().owner(REGIONS_COLLECTION_ID, region_id).ok()
+			} else {
+				None
+			}
 		}
 
 		#[ink(message)]

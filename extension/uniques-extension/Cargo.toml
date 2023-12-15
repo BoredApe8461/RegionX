@@ -16,6 +16,7 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 
 primitives = { path = "../../primitives" }
 obce = { git = "https://github.com/727-Ventures/obce", default-features = false }
+openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = "develop", default-features = false }
 
 [lib]
 path = "src/lib.rs"

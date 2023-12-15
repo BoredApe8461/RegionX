@@ -16,6 +16,7 @@ openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = 
 
 environment = { path = "../../environment" }
 uniques-extension = { path = "../../extension/uniques-extension", features = ["ink"] }
+primitives = { path = "../../primitives" }
 
 [dev-dependencies]
 ink_e2e = "4.2.1"

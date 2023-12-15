@@ -24,9 +24,9 @@ pub mod xc_regions {
     use crate::traits::regionmetadata_external;
     use crate::traits::{NonFungiblesInspect, RegionMetadata, RegionMetadataError};
     use crate::types::{Region, RegionId};
+    use ink::codegen::Env;
     use ink::storage::Mapping;
     use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
-    use ink::codegen::Env;
 
     #[ink(storage)]
     #[derive(Default, Storage)]

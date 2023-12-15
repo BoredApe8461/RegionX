@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use scale::{Decode, Encode};
 use primitives::RegionId;
+use scale::{Decode, Encode};
 
 #[obce::definition(id = 123)]
 pub trait UniquesExtension {

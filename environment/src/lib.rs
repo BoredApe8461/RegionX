@@ -14,8 +14,8 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 
-use ink::env::{DefaultEnvironment, Environment};
 use extension::Extension;
+use ink::env::{DefaultEnvironment, Environment};
 
 /// Our custom environment diverges from the `DefaultEnvironment` in the event topics
 /// limit.

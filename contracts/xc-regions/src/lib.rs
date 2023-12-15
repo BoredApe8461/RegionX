@@ -26,6 +26,7 @@ pub mod xc_regions {
     use crate::types::{Region, RegionId};
     use ink::storage::Mapping;
     use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
+    use ink::codegen::Env;
 
     #[ink(storage)]
     #[derive(Default, Storage)]
@@ -36,6 +37,7 @@ pub mod xc_regions {
     impl PSP34 for XcRegions {
         #[ink(message)]
         fn collection_id(&self) -> Id {
+            let collection_owner = self.env().extension().collection_owner(Default::default());
             todo!()
         }
 

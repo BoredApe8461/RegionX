@@ -1,5 +1,5 @@
 [package]
-name = "uniques-extension"
+name = "primitives"
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
@@ -14,9 +14,6 @@ ink = { version = "4.2.1", default-features = false }
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2.6", default-features = false, features = ["derive"], optional = true }
 
-obce = { git = "https://github.com/727-Ventures/obce", branch = "polkadot-v1.0.0", default-features = false, features = ["ink", "substrate"] }
-primitives = { path = "../../primitives" }
-
 [lib]
 path = "src/lib.rs"
 
@@ -27,5 +24,6 @@ std = [
     "scale/std",
     "scale-info/std",
 ]
+
 ink-as-dependency = []
 e2e-tests = []

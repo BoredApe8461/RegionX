@@ -9,5 +9,6 @@ members = [
     "contracts/xc-regions",
     "contracts/coretime-market", 
     "environment", 
-    "extensions/uniques-extension",
+    "extensions/uniques-extension", 
+    "primitives",
 ]

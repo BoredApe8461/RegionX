@@ -14,7 +14,7 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
 use ink::env::{DefaultEnvironment, Environment};
-use uniques_extension::UniquesExtension;
+use uniques_extension::Extension;
 
 /// Our custom environment diverges from the `DefaultEnvironment` in the event topics
 /// limit.
@@ -32,5 +32,5 @@ impl Environment for ExtendedEnvironment {
     type Timestamp = <DefaultEnvironment as Environment>::Timestamp;
 
     // TODO: add uniques chain extension
-    type ChainExtension = UniquesExtension;
+    type ChainExtension = Extension;
 }

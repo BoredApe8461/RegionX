@@ -8,7 +8,8 @@ pub trait UniquesExtension {
     fn collection_owner(&self, collection_id: RegionId) -> Result<(), UniquesError>;
 }
 
-//#[obce::error]
+#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, Debug)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub enum UniquesError {
     /// The signing account has no permission to do the operation.
     NoPermission = 1,
@@ -56,7 +57,6 @@ pub enum UniquesError {
     InvalidScaleEncoding,
 }
 
-/*
 impl ink::env::chain_extension::FromStatusCode for UniquesError {
     fn from_status_code(status_code: u32) -> Result<(), Self> {
         match status_code {
@@ -91,20 +91,3 @@ impl From<scale::Error> for UniquesError {
         UniquesError::InvalidScaleEncoding
     }
 }
-
-#[derive(Clone, Copy, Decode, Encode)]
-#[cfg_attr(
-    feature = "std",
-    derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout)
-)]
-pub enum Origin {
-    Caller,
-    Address,
-}
-
-impl Default for Origin {
-    fn default() -> Self {
-        Self::Address
-    }
-}
-*/

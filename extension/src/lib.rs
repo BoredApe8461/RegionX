@@ -6,4 +6,4 @@
 #[obce::ink_lang::extension]
 pub struct Extension;
 
-//impl uniques_extension::UniquesExtension for Extension {}
+impl uniques_extension::UniquesExtension for Extension {}

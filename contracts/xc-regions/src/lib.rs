@@ -27,6 +27,7 @@ pub mod xc_regions {
     use ink::codegen::Env;
     use ink::storage::Mapping;
     use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
+    use uniques_extension::UniquesExtension;
 
     #[ink(storage)]
     #[derive(Default, Storage)]

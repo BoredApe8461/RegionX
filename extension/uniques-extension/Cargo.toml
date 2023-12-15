@@ -15,7 +15,6 @@ scale = { package = "parity-scale-codec", version = "3", default-features = fals
 scale-info = { version = "2.6", default-features = false, features = ["derive"], optional = true }
 
 primitives = { path = "../../primitives" }
-
 obce = { git = "https://github.com/727-Ventures/obce", default-features = false }
 
 [lib]
@@ -23,6 +22,9 @@ path = "src/lib.rs"
 
 [features]
 default = ["std"]
+substrate = [
+    "obce/substrate",
+]
 ink = [
     "obce/ink",
     "dep:ink",
@@ -31,6 +33,11 @@ std = [
     "scale-info/std",
     "scale/std",
     "obce/std"
+]
+substrate-std = [
+    "std",
+    "substrate",
+    "obce/substrate-std",
 ]
 ink-std = [
     "std",

@@ -14,7 +14,7 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
 use ink::env::{DefaultEnvironment, Environment};
-use uniques_extension::Extension;
+use extension::Extension;
 
 /// Our custom environment diverges from the `DefaultEnvironment` in the event topics
 /// limit.

@@ -3,23 +3,14 @@
 use scale::{Decode, Encode};
 use primitives::RegionId;
 
-#[cfg(feature = "substrate")]
-pub mod substrate;
-
-#[cfg(feature = "ink")]
-pub mod ink;
-
-#[obce::error]
-pub enum RandomReadErr {
-    FailGetRandomSource,
-}
-
+/*
+#[obce::definition(id = 123)]
 pub trait UniquesExtension {
     fn collection_owner(&self, collection_id: RegionId) -> Result<(), UniquesError>;
 }
+*/
 
-#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, Debug)]
-#[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+//#[obce::error]
 pub enum UniquesError {
     /// The signing account has no permission to do the operation.
     NoPermission = 1,
@@ -67,6 +58,7 @@ pub enum UniquesError {
     InvalidScaleEncoding,
 }
 
+/*
 impl ink::env::chain_extension::FromStatusCode for UniquesError {
     fn from_status_code(status_code: u32) -> Result<(), Self> {
         match status_code {
@@ -117,3 +109,4 @@ impl Default for Origin {
         Self::Address
     }
 }
+*/

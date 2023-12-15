@@ -1,5 +1,5 @@
 [package]
-name = "environment"
+name = "extension"
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
@@ -10,11 +10,15 @@ license.workspace = true
 
 [dependencies]
 ink = { version = "4.2.1", default-features = false }
+ink_engine = { version = "4.2.1", default-features = false }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2.6", default-features = false, features = ["derive"], optional = true }
 
-extension = { path = "../extension" }
+primitives = { path = "../primitives" }
+#uniques-extension = { path = "./uniques-extension" }
+
+obce = { git = "https://github.com/727-Ventures/obce", default-features = false, features = ["ink"]}
 
 [lib]
 path = "src/lib.rs"
@@ -23,8 +27,10 @@ path = "src/lib.rs"
 default = ["std"]
 std = [
     "ink/std",
+    "ink_engine/std",
     "scale/std",
     "scale-info/std",
+    "obce/std",
 ]
 ink-as-dependency = []
 e2e-tests = []

@@ -22,6 +22,14 @@ pub enum XcRegionsError {
 	InvalidRegionId,
 	/// The metadata is either already initialized or the caller isn't the region owner.
 	CannotInitialize,
+	/// The region is non existant.
+	RegionNotFound,
+	/// No metadata was found for the region.
+	MetadataNotFound,
+	/// The associated metadata version was not found.
+	VersionNotFound,
+	/// The operation is not allowed.
+	NotAllowed,
 	/// An error occured in the underlying runtime.
 	RuntimeError,
 	/// The operation is not supported.
@@ -33,6 +41,10 @@ impl core::fmt::Display for XcRegionsError {
 		match self {
 			XcRegionsError::InvalidRegionId => write!(f, "InvalidRegionId"),
 			XcRegionsError::CannotInitialize => write!(f, "CannotInitialize"),
+			XcRegionsError::RegionNotFound => write!(f, "RegionNotFound"),
+			XcRegionsError::MetadataNotFound => write!(f, "MetadataNotFound"),
+			XcRegionsError::VersionNotFound => write!(f, "VersionNotFound"),
+			XcRegionsError::NotAllowed => write!(f, "NotAllowed"),
 			XcRegionsError::RuntimeError => write!(f, "RuntimeError"),
 			XcRegionsError::NotSupported => write!(f, "NotSupported"),
 		}
@@ -42,6 +54,6 @@ impl core::fmt::Display for XcRegionsError {
 #[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub struct VersionedRegion {
-	version: Version,
-	region: Region,
+	pub version: Version,
+	pub region: Region,
 }

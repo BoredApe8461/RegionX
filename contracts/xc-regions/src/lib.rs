@@ -144,18 +144,35 @@ pub mod xc_regions {
 			self.regions.insert(region_id, &region);
 
 			// TODO: emit event
-
 			Ok(())
 		}
 
 		#[ink(message)]
-		fn get_metadata(&self, _id: RegionId) -> Result<VersionedRegion, XcRegionsError> {
-			todo!()
+		fn get_metadata(&self, region_id: RegionId) -> Result<VersionedRegion, XcRegionsError> {
+			// We must first ensure that the region is still present on this chain before retrieving
+			// the metadata.
+			ensure!(self.exists(region_id), XcRegionsError::RegionNotFound);
+
+			let Some(region) = self.regions.get(region_id) else {
+				return Err(XcRegionsError::MetadataNotFound)
+			};
+			let Some(version) = self.metadata_versions.get(region_id) else {
+				// This should never happen.
+				return Err(XcRegionsError::VersionNotFound)
+			};
+
+			Ok(VersionedRegion { version, region })
 		}
 
 		#[ink(message)]
-		fn destroy(&mut self, _id: RegionId) -> Result<(), XcRegionsError> {
-			todo!()
+		fn destroy(&mut self, region_id: RegionId) -> Result<(), XcRegionsError> {
+			// We only allow the destruction of regions that no longer exist in the underlying nft
+			// pallet.
+			ensure!(!self.exists(region_id), XcRegionsError::NotAllowed);
+			self.regions.remove(region_id);
+
+			// TODO: emit event
+			Ok(())
 		}
 	}
 
@@ -167,7 +184,7 @@ pub mod xc_regions {
 	}
 
 	impl XcRegions {
-		fn _exists(&self, region_id: RegionId) -> bool {
+		fn exists(&self, region_id: RegionId) -> bool {
 			if let Ok(maybe_item) = self.env().extension().item(REGIONS_COLLECTION_ID, region_id) {
 				maybe_item.is_some()
 			} else {

@@ -19,7 +19,7 @@
 ///
 /// The type that is encoded into this `u128`:
 ///
-/// ```rust
+/// ```ignore
 /// pub struct RegionId {
 /// 	    /// The timeslice at which this Region begins.
 /// 	    pub begin: Timeslice,

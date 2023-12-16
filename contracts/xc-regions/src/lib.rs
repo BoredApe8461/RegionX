@@ -33,7 +33,7 @@ pub mod xc_regions {
 	};
 	use ink::{codegen::Env, storage::Mapping};
 	use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
-	use primitives::CollectionId;
+	use primitives::{RuntimeCall, UniquesCall};
 	use uniques_extension::UniquesExtension;
 
 	#[ink(storage)]
@@ -67,7 +67,8 @@ pub mod xc_regions {
 		}
 
 		#[ink(message)]
-		fn allowance(&self, owner: AccountId, operator: AccountId, id: Option<Id>) -> bool {
+		fn allowance(&self, _owner: AccountId, _operator: AccountId, _id: Option<Id>) -> bool {
+			// Resolvable with: https://github.com/paritytech/polkadot-sdk/pull/2727
 			todo!()
 		}
 
@@ -78,12 +79,44 @@ pub mod xc_regions {
 			id: Option<Id>,
 			approved: bool,
 		) -> Result<(), PSP34Error> {
-			todo!()
+			let Some(Id::U128(id)) = id else {
+				return Err(PSP34Error::Custom("Invalid RegionId".to_string()))
+			};
+
+			if approved {
+				// Approve:
+				self.env()
+					.call_runtime(&RuntimeCall::Uniques(UniquesCall::ApproveTransfer {
+						collection: REGIONS_COLLECTION_ID,
+						item: id,
+						delegate: operator,
+					}))
+					.map_err(|_| PSP34Error::Custom("Runtime error".to_string()))
+			} else {
+				// Cancel approval:
+				self.env()
+					.call_runtime(&RuntimeCall::Uniques(UniquesCall::CancelApproval {
+						collection: REGIONS_COLLECTION_ID,
+						item: id,
+						maybe_check_delegate: Some(operator),
+					}))
+					.map_err(|_| PSP34Error::Custom("Runtime error".to_string()))
+			}
 		}
 
 		#[ink(message)]
-		fn transfer(&mut self, to: AccountId, id: Id, data: Vec<u8>) -> Result<(), PSP34Error> {
-			todo!()
+		fn transfer(&mut self, to: AccountId, id: Id, _data: Vec<u8>) -> Result<(), PSP34Error> {
+			let Id::U128(id) = id else {
+				return Err(PSP34Error::Custom("Invalid RegionId".to_string()))
+			};
+
+			self.env()
+				.call_runtime(&RuntimeCall::Uniques(UniquesCall::Transfer {
+					collection: REGIONS_COLLECTION_ID,
+					item: id,
+					dest: to,
+				}))
+				.map_err(|_| PSP34Error::Custom("Runtime error".to_string()))
 		}
 
 		#[ink(message)]
@@ -94,17 +127,17 @@ pub mod xc_regions {
 
 	impl RegionMetadata for XcRegions {
 		#[ink(message)]
-		fn init(&mut self, id: RegionId, metadata: Region) -> Result<(), RegionMetadataError> {
+		fn init(&mut self, _id: RegionId, _metadata: Region) -> Result<(), RegionMetadataError> {
 			todo!()
 		}
 
 		#[ink(message)]
-		fn get_metadata(&self, id: RegionId) -> Result<Region, RegionMetadataError> {
+		fn get_metadata(&self, _id: RegionId) -> Result<Region, RegionMetadataError> {
 			todo!()
 		}
 
 		#[ink(message)]
-		fn destroy(&mut self, id: RegionId) -> Result<(), RegionMetadataError> {
+		fn destroy(&mut self, _id: RegionId) -> Result<(), RegionMetadataError> {
 			todo!()
 		}
 	}
@@ -117,11 +150,11 @@ pub mod xc_regions {
 	}
 
 	impl NonFungiblesInspect<RegionId, AccountId> for XcRegions {
-		fn _exists(&self, id: RegionId) -> bool {
+		fn _exists(&self, _id: RegionId) -> bool {
 			todo!()
 		}
 
-		fn _owned(&self, id: RegionId) -> AccountId {
+		fn _owned(&self, _id: RegionId) -> AccountId {
 			todo!()
 		}
 	}

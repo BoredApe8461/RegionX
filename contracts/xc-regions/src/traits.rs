@@ -19,9 +19,6 @@ use crate::types::{Region, RegionId};
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub enum RegionMetadataError {}
 
-#[openbrush::wrapper]
-pub type RegionMetadataRef = dyn RegionMetadata;
-
 #[openbrush::trait_definition]
 pub trait RegionMetadata {
 	#[ink(message)]

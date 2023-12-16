@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
+use openbrush::traits::AccountId;
+
 // The type used to identify collections in the underlying NFT pallet.
 pub type CollectionId = u32;
 // TODO: docs
@@ -34,4 +36,26 @@ pub struct Region {
 	end: Timeslice,
 	core: CoreIndex,
 	mask: CoreMask,
+}
+
+#[derive(scale::Encode)]
+pub enum RuntimeCall {
+	// TODO: use proper index based on the underlying runtime.
+	#[codec(index = 17)]
+	Uniques(UniquesCall),
+}
+
+#[derive(scale::Encode)]
+pub enum UniquesCall {
+	// TODO: use proper index based on the underlying runtime.
+	#[codec(index = 8)]
+	Transfer { collection: CollectionId, item: RegionId, dest: AccountId },
+	#[codec(index = 25)]
+	ApproveTransfer { collection: CollectionId, item: RegionId, delegate: AccountId },
+	#[codec(index = 26)]
+	CancelApproval {
+		collection: CollectionId,
+		item: RegionId,
+		maybe_check_delegate: Option<AccountId>,
+	},
 }

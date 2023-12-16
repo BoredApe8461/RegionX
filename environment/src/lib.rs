@@ -17,8 +17,6 @@
 use extension::Extension;
 use ink::env::{DefaultEnvironment, Environment};
 
-/// Our custom environment diverges from the `DefaultEnvironment` in the event topics
-/// limit.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub enum ExtendedEnvironment {}

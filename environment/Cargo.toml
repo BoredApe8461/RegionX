@@ -16,8 +16,7 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 
 extension = { path = "../extension", default-features = false }
 
-[dev-dependencies]
-obce = { git = "https://github.com/727-Ventures/obce", default-features = false, features = ["ink-std"] }
+obce = { git = "https://github.com/727-Ventures/obce", default-features = false }
 
 [lib]
 path = "src/lib.rs"
@@ -28,7 +27,8 @@ std = [
     "ink/std",
     "scale/std",
     "scale-info/std",
-    "extension/ink-std"
+    "extension/ink-std",
+    "obce/std",
 ]
 ink-as-dependency = []
 e2e-tests = []

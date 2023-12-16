@@ -32,3 +32,23 @@ pub struct Region {
 	core: CoreIndex,
 	mask: CoreMask,
 }
+
+#[derive(scale::Decode, scale::Encode, Debug)]
+pub enum XcRegionsError {
+	/// The provided identifier is not a valid region id.
+	InvalidRegionId,
+	/// An error occured in the underlying runtime.
+	RuntimeError,
+	/// The operation is not supported.
+	NotSupported,
+}
+
+impl core::fmt::Display for XcRegionsError {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		match self {
+			XcRegionsError::InvalidRegionId => write!(f, "InvalidRegionId"),
+			XcRegionsError::RuntimeError => write!(f, "RuntimeError"),
+			XcRegionsError::NotSupported => write!(f, "NotSupported"),
+		}
+	}
+}

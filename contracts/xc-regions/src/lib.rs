@@ -28,7 +28,7 @@ pub mod xc_regions {
 		traits::{
 			regionmetadata_external, NonFungiblesInspect, RegionMetadata, RegionMetadataError,
 		},
-		types::{Region, RegionId},
+		types::{Region, RegionId, XcRegionsError},
 		REGIONS_COLLECTION_ID,
 	};
 	use ink::{codegen::Env, storage::Mapping};
@@ -80,7 +80,7 @@ pub mod xc_regions {
 			approved: bool,
 		) -> Result<(), PSP34Error> {
 			let Some(Id::U128(id)) = id else {
-				return Err(PSP34Error::Custom("Invalid RegionId".to_string()))
+				return Err(PSP34Error::Custom(XcRegionsError::InvalidRegionId.to_string()))
 			};
 
 			if approved {
@@ -91,7 +91,7 @@ pub mod xc_regions {
 						item: id,
 						delegate: operator,
 					}))
-					.map_err(|_| PSP34Error::Custom("Runtime error".to_string()))
+					.map_err(|_| PSP34Error::Custom(XcRegionsError::RuntimeError.to_string()))
 			} else {
 				// Cancel approval:
 				self.env()
@@ -100,14 +100,14 @@ pub mod xc_regions {
 						item: id,
 						maybe_check_delegate: Some(operator),
 					}))
-					.map_err(|_| PSP34Error::Custom("Runtime error".to_string()))
+					.map_err(|_| PSP34Error::Custom(XcRegionsError::RuntimeError.to_string()))
 			}
 		}
 
 		#[ink(message)]
 		fn transfer(&mut self, to: AccountId, id: Id, _data: Vec<u8>) -> Result<(), PSP34Error> {
 			let Id::U128(id) = id else {
-				return Err(PSP34Error::Custom("Invalid RegionId".to_string()))
+				return Err(PSP34Error::Custom(XcRegionsError::InvalidRegionId.to_string()))
 			};
 
 			self.env()
@@ -116,12 +116,13 @@ pub mod xc_regions {
 					item: id,
 					dest: to,
 				}))
-				.map_err(|_| PSP34Error::Custom("Runtime error".to_string()))
+				.map_err(|_| PSP34Error::Custom(XcRegionsError::RuntimeError.to_string()))
 		}
 
 		#[ink(message)]
 		fn total_supply(&self) -> Balance {
-			todo!()
+			// Unsupported since it would reuire a lot of storage reads.
+			Default::default()
 		}
 	}
 

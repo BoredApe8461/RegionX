@@ -29,7 +29,7 @@ pub mod xc_regions {
 		types::{VersionedRegion, XcRegionsError},
 		REGIONS_COLLECTION_ID,
 	};
-	use ink::{codegen::Env, storage::Mapping};
+	use ink::{codegen::Env, storage::Mapping, prelude::{vec::Vec, string::ToString}};
 	use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
 	use primitives::{
 		coretime::{Region, RegionId},

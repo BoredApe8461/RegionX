@@ -14,9 +14,9 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 # OpenBrush dependency
 openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = "develop", default-features = false, features=["psp34"] }
 
-environment = { path = "../../environment" }
-uniques-extension = { path = "../../extension/uniques-extension", features = ["ink"] }
-primitives = { path = "../../primitives" }
+environment = { path = "../../environment", default-features = false }
+uniques-extension = { path = "../../extension/uniques-extension", default-features = false, features = ["ink"]}
+primitives = { path = "../../primitives", default-features = false  }
 
 [dev-dependencies]
 ink_e2e = "4.2.1"
@@ -31,6 +31,9 @@ std = [
     "scale/std",
     "scale-info/std",
     "openbrush/std",
+    "environment/std",
+    "uniques-extension/std",
+    "primitives/std",
 ]
 ink-as-dependency = []
 e2e-tests = []

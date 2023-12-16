@@ -14,7 +14,7 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 # OpenBrush dependency
 openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = "develop", default-features = false, features=["psp34"] }
 
-extension = { path = "../../extension", default-features = false, features = ["ink"] }
+environment = { path = "../../environment", default-features = false, features = ["ink"] }
 uniques-extension = { path = "../../extension/uniques-extension", default-features = false, features = ["ink"]}
 primitives = { path = "../../primitives", default-features = false  }
 
@@ -31,7 +31,7 @@ std = [
     "scale/std",
     "scale-info/std",
     "openbrush/std",
-    "extension/ink-std",
+    "environment/ink-std",
     "uniques-extension/std",
     "primitives/std",
 ]

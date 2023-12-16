@@ -16,32 +16,13 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![feature(min_specialization)]
 
-use ink::env::{DefaultEnvironment, Environment};
-
 mod traits;
 mod types;
 
 // NOTE: This should be the collection ID of the underlying region collection.
 const REGIONS_COLLECTION_ID: u32 = 42;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
-pub enum ExtendedEnvironment {}
-
-impl Environment for ExtendedEnvironment {
-	const MAX_EVENT_TOPICS: usize = <DefaultEnvironment as Environment>::MAX_EVENT_TOPICS;
-
-	type AccountId = <DefaultEnvironment as Environment>::AccountId;
-	type Balance = <DefaultEnvironment as Environment>::Balance;
-	type Hash = <DefaultEnvironment as Environment>::Hash;
-	type BlockNumber = <DefaultEnvironment as Environment>::BlockNumber;
-	type Timestamp = <DefaultEnvironment as Environment>::Timestamp;
-
-	// TODO: add uniques chain extension
-	type ChainExtension = extension::Extension;
-}
-
-#[openbrush::contract(env = crate::ExtendedEnvironment)]
+#[openbrush::contract(env = environment::ExtendedEnvironment)]
 pub mod xc_regions {
 	use crate::{
 		traits::{regionmetadata_external, RegionMetadata},

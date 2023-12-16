@@ -39,4 +39,3 @@ ink-std = [
     "ink/std",
     "obce/ink-std",
 ]
-

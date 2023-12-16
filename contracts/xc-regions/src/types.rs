@@ -13,33 +13,15 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-pub type RegionId = u128;
-
-pub type Timeslice = u32;
-
-/// Index of a Polkadot Core.
-pub type CoreIndex = u16;
-
-#[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
-pub struct CoreMask([u8; 10]);
-
-#[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
-pub struct Region {
-	begin: Timeslice,
-	end: Timeslice,
-	core: CoreIndex,
-	mask: CoreMask,
-}
+use primitives::{coretime::Region, Version};
 
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub enum XcRegionsError {
 	/// The provided identifier is not a valid region id.
 	InvalidRegionId,
-	/// The metadata is already initialized for the region.
-	MetadataAlreadyInitialized,
+	/// The metadata is either already initialized or the caller isn't the region owner.
+	CannotInitialize,
 	/// An error occured in the underlying runtime.
 	RuntimeError,
 	/// The operation is not supported.
@@ -50,9 +32,16 @@ impl core::fmt::Display for XcRegionsError {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		match self {
 			XcRegionsError::InvalidRegionId => write!(f, "InvalidRegionId"),
-			XcRegionsError::MetadataAlreadyInitialized => write!(f, "MetadataAlreadyInitialized"),
+			XcRegionsError::CannotInitialize => write!(f, "CannotInitialize"),
 			XcRegionsError::RuntimeError => write!(f, "RuntimeError"),
 			XcRegionsError::NotSupported => write!(f, "NotSupported"),
 		}
 	}
+}
+
+#[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+pub struct VersionedRegion {
+	version: Version,
+	region: Region,
 }

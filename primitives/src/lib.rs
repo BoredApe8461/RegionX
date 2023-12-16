@@ -20,6 +20,9 @@ pub mod uniques;
 /// Balance of an account.
 pub type Balance = u64;
 
+/// The type used for versioning metadata.
+pub type Version = u32;
+
 #[derive(scale::Encode)]
 pub enum RuntimeCall {
 	// TODO: use proper index based on the underlying runtime.

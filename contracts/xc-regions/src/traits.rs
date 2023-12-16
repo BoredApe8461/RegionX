@@ -13,7 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::types::{Region, RegionId, XcRegionsError};
+use crate::types::{VersionedRegion, XcRegionsError};
+use primitives::coretime::{Region, RegionId};
 
 #[openbrush::trait_definition]
 pub trait RegionMetadata {
@@ -21,7 +22,7 @@ pub trait RegionMetadata {
 	fn init(&mut self, id: RegionId, metadata: Region) -> Result<(), XcRegionsError>;
 
 	#[ink(message)]
-	fn get_metadata(&self, id: RegionId) -> Result<Region, XcRegionsError>;
+	fn get_metadata(&self, id: RegionId) -> Result<VersionedRegion, XcRegionsError>;
 
 	#[ink(message)]
 	fn destroy(&mut self, id: RegionId) -> Result<(), XcRegionsError>;

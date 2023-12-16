@@ -26,18 +26,24 @@ const REGIONS_COLLECTION_ID: u32 = 42;
 pub mod xc_regions {
 	use crate::{
 		traits::{regionmetadata_external, RegionMetadata},
-		types::{Region, RegionId, XcRegionsError},
+		types::{VersionedRegion, XcRegionsError},
 		REGIONS_COLLECTION_ID,
 	};
 	use ink::{codegen::Env, storage::Mapping};
 	use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
-	use primitives::{ensure, uniques::UniquesCall, RuntimeCall};
+	use primitives::{
+		coretime::{Region, RegionId},
+		ensure,
+		uniques::UniquesCall,
+		RuntimeCall, Version,
+	};
 	use uniques_extension::UniquesExtension;
 
 	#[ink(storage)]
 	#[derive(Default, Storage)]
 	pub struct XcRegions {
-		pub metadata: Mapping<RegionId, Region>,
+		pub regions: Mapping<RegionId, Region>,
+		pub metadata_versions: Mapping<RegionId, Version>,
 	}
 
 	impl PSP34 for XcRegions {
@@ -126,13 +132,24 @@ pub mod xc_regions {
 
 	impl RegionMetadata for XcRegions {
 		#[ink(message)]
-		fn init(&mut self, region_id: RegionId, _metadata: Region) -> Result<(), XcRegionsError> {
-			ensure!(self.exists(region_id), XcRegionsError::MetadataAlreadyInitialized);
-			todo!()
+		fn init(&mut self, region_id: RegionId, region: Region) -> Result<(), XcRegionsError> {
+			ensure!(
+				Some(self.env().caller()) == self.owner_of(Id::U128(region_id)),
+				XcRegionsError::CannotInitialize
+			);
+
+			let version = self.metadata_versions.get(region_id).unwrap_or_default();
+
+			self.metadata_versions.insert(region_id, &version.saturating_add(1));
+			self.regions.insert(region_id, &region);
+
+			// TODO: emit event
+
+			Ok(())
 		}
 
 		#[ink(message)]
-		fn get_metadata(&self, _id: RegionId) -> Result<Region, XcRegionsError> {
+		fn get_metadata(&self, _id: RegionId) -> Result<VersionedRegion, XcRegionsError> {
 			todo!()
 		}
 
@@ -150,7 +167,7 @@ pub mod xc_regions {
 	}
 
 	impl XcRegions {
-		fn exists(&self, region_id: RegionId) -> bool {
+		fn _exists(&self, region_id: RegionId) -> bool {
 			if let Ok(maybe_item) = self.env().extension().item(REGIONS_COLLECTION_ID, region_id) {
 				maybe_item.is_some()
 			} else {

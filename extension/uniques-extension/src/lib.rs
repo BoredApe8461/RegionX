@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use openbrush::traits::AccountId;
-use primitives::{CollectionId, RegionId};
+use primitives::{CollectionId, ItemDetails, RegionId};
 use scale::{Decode, Encode};
 
 /// These are only the functions are essential for the xc-regions contract. However, the underlying
@@ -13,14 +13,24 @@ use scale::{Decode, Encode};
 /// Once WASM view functions are supported, there will no longer be a need for a chain extension.
 #[obce::definition(id = 123)]
 pub trait UniquesExtension {
+	/// The owner of the specific item.
 	fn owner(
 		&self,
 		collection_id: CollectionId,
 		item_id: RegionId,
 	) -> Result<AccountId, UniquesError>;
 
-	// All items owned by `who`.
+	/// All items owned by `who`.
 	fn owned(&self, who: AccountId) -> Result<Vec<(CollectionId, RegionId)>, UniquesError>;
+
+	/// An item within a collection.
+	//
+	// Requires: https://github.com/paritytech/polkadot-sdk/pull/2727
+	fn item(
+		&self,
+		collection_id: CollectionId,
+		item_id: RegionId,
+	) -> Result<Option<ItemDetails>, UniquesError>;
 }
 
 #[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, Debug)]

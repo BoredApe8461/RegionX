@@ -25,6 +25,8 @@ pub type Timeslice = u32;
 /// Index of a Polkadot Core.
 pub type CoreIndex = u16;
 
+pub type Balance = u64;
+
 #[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
 pub struct CoreMask([u8; 10]);
@@ -58,4 +60,27 @@ pub enum UniquesCall {
 		item: RegionId,
 		maybe_check_delegate: Option<AccountId>,
 	},
+}
+
+/// Information concerning the ownership of a single unique item.
+#[derive(scale::Decode, scale::Encode, Clone, Debug, PartialEq, Eq)]
+pub struct ItemDetails {
+	/// The owner of this item.
+	pub owner: AccountId,
+	/// The approved transferrer of this item, if one is set.
+	pub approved: Option<AccountId>,
+	/// Whether the item can be transferred or not.
+	pub is_frozen: bool,
+	/// The amount held in the pallet's default account for this item. Free-hold items will have
+	/// this as zero.
+	pub deposit: Balance,
+}
+
+#[macro_export]
+macro_rules! ensure {
+	( $x:expr, $y:expr $(,)? ) => {{
+		if !$x {
+			return Err($y)
+		}
+	}};
 }

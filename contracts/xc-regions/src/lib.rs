@@ -25,15 +25,13 @@ const REGIONS_COLLECTION_ID: u32 = 42;
 #[openbrush::contract(env = environment::ExtendedEnvironment)]
 pub mod xc_regions {
 	use crate::{
-		traits::{
-			regionmetadata_external, NonFungiblesInspect, RegionMetadata, RegionMetadataError,
-		},
+		traits::{regionmetadata_external, RegionMetadata},
 		types::{Region, RegionId, XcRegionsError},
 		REGIONS_COLLECTION_ID,
 	};
 	use ink::{codegen::Env, storage::Mapping};
 	use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
-	use primitives::{RuntimeCall, UniquesCall};
+	use primitives::{ensure, RuntimeCall, UniquesCall};
 	use uniques_extension::UniquesExtension;
 
 	#[ink(storage)]
@@ -128,17 +126,18 @@ pub mod xc_regions {
 
 	impl RegionMetadata for XcRegions {
 		#[ink(message)]
-		fn init(&mut self, _id: RegionId, _metadata: Region) -> Result<(), RegionMetadataError> {
+		fn init(&mut self, region_id: RegionId, _metadata: Region) -> Result<(), XcRegionsError> {
+			ensure!(self.exists(region_id), XcRegionsError::MetadataAlreadyInitialized);
 			todo!()
 		}
 
 		#[ink(message)]
-		fn get_metadata(&self, _id: RegionId) -> Result<Region, RegionMetadataError> {
+		fn get_metadata(&self, _id: RegionId) -> Result<Region, XcRegionsError> {
 			todo!()
 		}
 
 		#[ink(message)]
-		fn destroy(&mut self, _id: RegionId) -> Result<(), RegionMetadataError> {
+		fn destroy(&mut self, _id: RegionId) -> Result<(), XcRegionsError> {
 			todo!()
 		}
 	}
@@ -150,13 +149,13 @@ pub mod xc_regions {
 		}
 	}
 
-	impl NonFungiblesInspect<RegionId, AccountId> for XcRegions {
-		fn _exists(&self, _id: RegionId) -> bool {
-			todo!()
-		}
-
-		fn _owned(&self, _id: RegionId) -> AccountId {
-			todo!()
+	impl XcRegions {
+		fn exists(&self, region_id: RegionId) -> bool {
+			if let Ok(maybe_item) = self.env().extension().item(REGIONS_COLLECTION_ID, region_id) {
+				maybe_item.is_some()
+			} else {
+				false
+			}
 		}
 	}
 }

@@ -13,16 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod coretime;
-pub mod macros;
-pub mod uniques;
-
-/// Balance of an account.
-pub type Balance = u64;
-
-#[derive(scale::Encode)]
-pub enum RuntimeCall {
-	// TODO: use proper index based on the underlying runtime.
-	#[codec(index = 17)]
-	Uniques(uniques::UniquesCall),
+#[macro_export]
+macro_rules! ensure {
+	( $x:expr, $y:expr $(,)? ) => {{
+		if !$x {
+			return Err($y)
+		}
+	}};
 }

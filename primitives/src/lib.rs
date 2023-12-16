@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
 pub mod coretime;
 pub mod macros;
 pub mod uniques;

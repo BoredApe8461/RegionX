@@ -14,6 +14,7 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use ink::prelude::vec::Vec;
 use openbrush::traits::AccountId;
 use primitives::{
 	coretime::RegionId,

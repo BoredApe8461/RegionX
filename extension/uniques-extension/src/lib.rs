@@ -36,14 +36,12 @@ pub trait UniquesExtension {
 		&self,
 		collection_id: CollectionId,
 		item_id: RegionId,
-	) -> Result<AccountId, UniquesError>;
+	) -> Result<Option<AccountId>, UniquesError>;
 
 	/// All items owned by `who`.
 	fn owned(&self, who: AccountId) -> Result<Vec<(CollectionId, RegionId)>, UniquesError>;
 
 	/// An item within a collection.
-	//
-	// Requires: https://github.com/paritytech/polkadot-sdk/pull/2727
 	fn item(
 		&self,
 		collection_id: CollectionId,

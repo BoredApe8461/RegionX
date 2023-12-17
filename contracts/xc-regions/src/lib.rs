@@ -73,7 +73,7 @@ pub mod xc_regions {
 		#[ink(message)]
 		fn owner_of(&self, id: Id) -> Option<AccountId> {
 			if let Id::U128(region_id) = id {
-				self.env().extension().owner(REGIONS_COLLECTION_ID, region_id).ok()
+				self.env().extension().owner(REGIONS_COLLECTION_ID, region_id).ok()?
 			} else {
 				None
 			}

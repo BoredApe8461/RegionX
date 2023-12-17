@@ -20,6 +20,7 @@ primitives = { path = "../../primitives", default-features = false  }
 
 [dev-dependencies]
 ink_e2e = "4.2.1"
+obce = { git = "https://github.com/727-Ventures/obce", default-features = false, features = ["ink-std"] }
 
 [lib]
 path = "src/lib.rs"

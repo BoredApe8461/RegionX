@@ -19,6 +19,11 @@
 mod traits;
 mod types;
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 // NOTE: This should be the collection ID of the underlying region collection.
 const REGIONS_COLLECTION_ID: u32 = 42;
 

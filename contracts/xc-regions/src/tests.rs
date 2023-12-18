@@ -13,16 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::MockExtension, REGIONS_COLLECTION_ID};
-use ink::env::{
-	test::{default_accounts, DefaultAccounts},
-	DefaultEnvironment,
-};
-use primitives::{
-	assert_ok,
-	coretime::RegionId,
-	uniques::{CollectionId, ItemDetails},
-};
+use crate::mock::{get_default_accounts, region_id, MockExtension};
+use ink::env::{test::DefaultAccounts, DefaultEnvironment};
+use primitives::{assert_ok, uniques::ItemDetails};
 
 #[ink::test]
 fn chain_extensions_helper_functions_work() {
@@ -64,12 +57,4 @@ fn chain_extensions_helper_functions_work() {
 	assert!(mock.account.get(alice).is_none());
 
 	assert!(mock.burn(region_id(1)).is_err());
-}
-
-fn region_id(region_id: RegionId) -> (CollectionId, RegionId) {
-	(REGIONS_COLLECTION_ID, region_id)
-}
-
-fn get_default_accounts() -> DefaultAccounts<DefaultEnvironment> {
-	default_accounts::<DefaultEnvironment>()
 }

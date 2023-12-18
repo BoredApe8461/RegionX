@@ -13,7 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-use ink::storage::Mapping;
+use crate::REGIONS_COLLECTION_ID;
+use ink::{
+	env::{
+		test::{default_accounts, DefaultAccounts},
+		DefaultEnvironment,
+	},
+	storage::Mapping,
+};
 use openbrush::traits::AccountId;
 use primitives::{
 	coretime::RegionId,
@@ -92,4 +99,12 @@ impl MockExtension {
 
 		Ok(())
 	}
+}
+
+pub fn region_id(region_id: RegionId) -> (CollectionId, RegionId) {
+	(REGIONS_COLLECTION_ID, region_id)
+}
+
+pub fn get_default_accounts() -> DefaultAccounts<DefaultEnvironment> {
+	default_accounts::<DefaultEnvironment>()
 }

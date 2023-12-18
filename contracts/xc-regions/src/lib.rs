@@ -204,25 +204,41 @@ pub mod xc_regions {
 
 	#[cfg(all(test, feature = "e2e-tests"))]
 	pub mod tests {
+		use crate::{
+			mock::{region_id, register_chain_extensions, MockExtension},
+			xc_regions::XcRegionsRef,
+		};
+		use ink::env::{test::DefaultAccounts, DefaultEnvironment};
+		use ink_e2e::build_message;
 		use openbrush::contracts::psp34::psp34_external::PSP34;
+		use primitives::{address_of, assert_ok};
 
 		type E2EResult<T> = Result<T, Box<dyn std::error::Error>>;
 
-		#[ink::test]
-		fn chain_extension_works() {
-			/*
-			// Initialize some state:
+		#[ink_e2e::test]
+		async fn chain_extension_works(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
 			let mut mock = MockExtension::default();
-			let DefaultAccounts::<DefaultEnvironment> { alice, bob, .. } = get_default_accounts();
-			assert_ok!(mock.mint(region_id(0), alice));
-			assert_ok!(mock.mint(region_id(1), alice));
 
-			let xc_regions = XcRegions::new();
+			// Initialize some state:
+			assert_ok!(mock.mint(region_id(0), address_of!(Alice)));
+			assert_ok!(mock.mint(region_id(1), address_of!(Alice)));
+
 			register_chain_extensions(mock);
 
-			// 1. Ensure `owner_of` works:
-			assert_eq!(xc_regions.owner_of(REGIONS_COLLECTION_ID, 0), Some(alice));
-			*/
+			// Todo: generate proper constructor with the right environment.
+			let constructor = XcRegionsRef::new();
+			//let constructor = CreateBuilder<>::
+
+			let address = client
+				.instantiate("xc_regions", &ink_e2e::alice(), constructor, 0, None)
+				.await
+				.expect("instantiate failed")
+				.account_id;
+
+			//// 1. Ensure `owner_of` works:
+			//assert_eq!(xc_regions.owner_of(REGIONS_COLLECTION_ID, 0), Some(alice));
+
+			Ok(())
 		}
 	}
 }

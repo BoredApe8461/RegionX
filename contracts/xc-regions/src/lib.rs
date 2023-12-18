@@ -201,4 +201,28 @@ pub mod xc_regions {
 			}
 		}
 	}
+
+	#[cfg(all(test, feature = "e2e-tests"))]
+	pub mod tests {
+		use openbrush::contracts::psp34::psp34_external::PSP34;
+
+		type E2EResult<T> = Result<T, Box<dyn std::error::Error>>;
+
+		#[ink::test]
+		fn chain_extension_works() {
+			/*
+			// Initialize some state:
+			let mut mock = MockExtension::default();
+			let DefaultAccounts::<DefaultEnvironment> { alice, bob, .. } = get_default_accounts();
+			assert_ok!(mock.mint(region_id(0), alice));
+			assert_ok!(mock.mint(region_id(1), alice));
+
+			let xc_regions = XcRegions::new();
+			register_chain_extensions(mock);
+
+			// 1. Ensure `owner_of` works:
+			assert_eq!(xc_regions.owner_of(REGIONS_COLLECTION_ID, 0), Some(alice));
+			*/
+		}
+	}
 }

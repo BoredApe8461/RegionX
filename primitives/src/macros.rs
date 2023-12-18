@@ -21,3 +21,21 @@ macro_rules! ensure {
 		}
 	}};
 }
+
+/// Panic if an expression doesn't evaluate to `Ok`.
+///
+/// Used as `assert_ok!(expression_to_assert, expected_ok_expression)`,
+/// or `assert_ok!(expression_to_assert)` which would assert against `Ok(())`.
+#[macro_export]
+macro_rules! assert_ok {
+	( $x:expr $(,)? ) => {
+		let is = $x;
+		match is {
+			Ok(_) => (),
+			_ => assert!(false, "Expected Ok(_). Got {:#?}", is),
+		}
+	};
+	( $x:expr, $y:expr $(,)? ) => {
+		assert_eq!($x, Ok($y));
+	};
+}

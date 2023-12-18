@@ -13,21 +13,19 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::REGIONS_COLLECTION_ID;
 use ink::storage::Mapping;
 use openbrush::traits::AccountId;
 use primitives::{
 	coretime::RegionId,
+	ensure,
 	uniques::{CollectionId, ItemDetails},
-	Balance,
 };
-use scale::{Decode, Encode};
 use uniques_extension::{UniquesError, UniquesExtension};
 
 #[derive(Default, Debug)]
 pub struct MockExtension {
-	items: Mapping<(CollectionId, RegionId), ItemDetails>,
-	account: Mapping<AccountId, Vec<(CollectionId, RegionId)>>,
+	pub(crate) items: Mapping<(CollectionId, RegionId), ItemDetails>,
+	pub(crate) account: Mapping<AccountId, Vec<(CollectionId, RegionId)>>,
 }
 
 #[obce::mock]
@@ -58,28 +56,40 @@ impl UniquesExtension for MockExtension {
 
 // Helper functions for modifying the mock state.
 impl MockExtension {
-	pub fn mint(&mut self, region_id: RegionId, owner: AccountId) {
+	pub fn mint(
+		&mut self,
+		id: (CollectionId, RegionId),
+		owner: AccountId,
+	) -> Result<(), &'static str> {
+		ensure!(self.items.get((id.0, id.1)).is_none(), "Item already exists");
 		self.items.insert(
-			(REGIONS_COLLECTION_ID, region_id),
+			(id.0, id.1),
 			&ItemDetails { owner, approved: None, is_frozen: false, deposit: Default::default() },
 		);
 
 		let mut owned = self.account.get(owner).map(|a| a).unwrap_or_default();
-		owned.push((REGIONS_COLLECTION_ID, region_id));
+		owned.push((id.0, id.1));
 		self.account.insert(owner, &owned);
+
+		Ok(())
 	}
 
-	pub fn burn(&mut self, region_id: RegionId) {
-		let owner = self
-			.items
-			.get((REGIONS_COLLECTION_ID, region_id))
-			.map(|a| a.owner)
-			.expect("Item not found");
+	pub fn burn(&mut self, id: (CollectionId, RegionId)) -> Result<(), &'static str> {
+		let Some(owner) = self.items.get((id.0, id.1)).map(|a| a.owner) else {
+			return Err("Item not found")
+		};
 
 		let mut owned = self.account.get(owner).map(|a| a).unwrap_or_default();
-		owned.retain(|a| *a != (REGIONS_COLLECTION_ID, region_id));
-		self.account.insert(owner, &owned);
+		owned.retain(|a| *a != (id.0, id.1));
 
-		self.items.remove((REGIONS_COLLECTION_ID, region_id));
+		if owned.is_empty() {
+			self.account.remove(owner);
+		} else {
+			self.account.insert(owner, &owned);
+		}
+
+		self.items.remove((id.0, id.1));
+
+		Ok(())
 	}
 }

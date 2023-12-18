@@ -43,16 +43,33 @@ pub mod xc_regions {
 	use primitives::{
 		coretime::{Region, RegionId},
 		ensure,
-		uniques::UniquesCall,
+		uniques::{CollectionId, UniquesCall},
 		RuntimeCall, Version,
 	};
 	use uniques_extension::UniquesExtension;
+
+	#[cfg(test)]
+	use primitives::uniques::ItemDetails;
 
 	#[ink(storage)]
 	#[derive(Default, Storage)]
 	pub struct XcRegions {
 		pub regions: Mapping<RegionId, Region>,
 		pub metadata_versions: Mapping<RegionId, Version>,
+		// Mock state only used for testing. In production the contract is reading the state from
+		// the underlying uniques pallet.
+		#[cfg(test)]
+		pub items: Mapping<
+			(primitives::uniques::CollectionId, primitives::coretime::RegionId),
+			primitives::uniques::ItemDetails,
+		>,
+		// Mock state only used for testing. In production the contract is reading the state from
+		// the underlying uniques pallet.
+		#[cfg(test)]
+		pub account: Mapping<
+			AccountId,
+			Vec<(primitives::uniques::CollectionId, primitives::coretime::RegionId)>,
+		>,
 	}
 
 	impl PSP34 for XcRegions {
@@ -63,17 +80,13 @@ pub mod xc_regions {
 
 		#[ink(message)]
 		fn balance_of(&self, who: AccountId) -> u32 {
-			if let Ok(owned) = self.env().extension().owned(who) {
-				owned.len() as u32
-			} else {
-				0u32
-			}
+			self.owned(who).len() as u32
 		}
 
 		#[ink(message)]
 		fn owner_of(&self, id: Id) -> Option<AccountId> {
 			if let Id::U128(region_id) = id {
-				self.env().extension().owner(REGIONS_COLLECTION_ID, region_id).ok()?
+				self.owner(region_id)
 			} else {
 				None
 			}
@@ -200,6 +213,76 @@ pub mod xc_regions {
 				false
 			}
 		}
+
+		fn owner(&self, region_id: RegionId) -> Option<AccountId> {
+			#[cfg(not(test))]
+			{
+				self.env().extension().owner(REGIONS_COLLECTION_ID, region_id).ok()?
+			}
+			// If testing we use mock state.
+			#[cfg(test)]
+			{
+				self.items.get((REGIONS_COLLECTION_ID, region_id)).map(|a| a.owner)
+			}
+		}
+
+		fn owned(&self, who: AccountId) -> Vec<(CollectionId, RegionId)> {
+			#[cfg(not(test))]
+			{
+				self.env().extension().owned(who).unwrap_or_default()
+			}
+			// If testing we use mock state.
+			#[cfg(test)]
+			{
+				self.account.get(who).map(|a| a).unwrap_or_default()
+			}
+		}
+	}
+
+	// Helper functions for modifying the mock state.
+	#[cfg(test)]
+	impl XcRegions {
+		pub fn mint(
+			&mut self,
+			id: (CollectionId, RegionId),
+			owner: AccountId,
+		) -> Result<(), &'static str> {
+			ensure!(self.items.get((id.0, id.1)).is_none(), "Item already exists");
+			self.items.insert(
+				(id.0, id.1),
+				&ItemDetails {
+					owner,
+					approved: None,
+					is_frozen: false,
+					deposit: Default::default(),
+				},
+			);
+
+			let mut owned = self.account.get(owner).map(|a| a).unwrap_or_default();
+			owned.push((id.0, id.1));
+			self.account.insert(owner, &owned);
+
+			Ok(())
+		}
+
+		pub fn burn(&mut self, id: (CollectionId, RegionId)) -> Result<(), &'static str> {
+			let Some(owner) = self.items.get((id.0, id.1)).map(|a| a.owner) else {
+				return Err("Item not found")
+			};
+
+			let mut owned = self.account.get(owner).map(|a| a).unwrap_or_default();
+			owned.retain(|a| *a != (id.0, id.1));
+
+			if owned.is_empty() {
+				self.account.remove(owner);
+			} else {
+				self.account.insert(owner, &owned);
+			}
+
+			self.items.remove((id.0, id.1));
+
+			Ok(())
+		}
 	}
 
 	#[cfg(all(test, feature = "e2e-tests"))]
@@ -216,28 +299,7 @@ pub mod xc_regions {
 		type E2EResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 		#[ink_e2e::test]
-		async fn chain_extension_works(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
-			let mut mock = MockExtension::default();
-
-			// Initialize some state:
-			assert_ok!(mock.mint(region_id(0), address_of!(Alice)));
-			assert_ok!(mock.mint(region_id(1), address_of!(Alice)));
-
-			register_chain_extensions(mock);
-
-			// Todo: generate proper constructor with the right environment.
-			let constructor = XcRegionsRef::new();
-			//let constructor = CreateBuilder<>::
-
-			let address = client
-				.instantiate("xc_regions", &ink_e2e::alice(), constructor, 0, None)
-				.await
-				.expect("instantiate failed")
-				.account_id;
-
-			//// 1. Ensure `owner_of` works:
-			//assert_eq!(xc_regions.owner_of(REGIONS_COLLECTION_ID, 0), Some(alice));
-
+		async fn test_1(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
 			Ok(())
 		}
 	}

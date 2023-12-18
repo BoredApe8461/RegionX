@@ -33,7 +33,7 @@ std = [
     "scale-info/std",
     "openbrush/std",
     "environment/ink-std",
-    "uniques-extension/std",
+    "uniques-extension/ink-std",
     "primitives/std",
 ]
 ink-as-dependency = []

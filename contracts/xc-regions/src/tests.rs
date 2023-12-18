@@ -15,12 +15,24 @@
 
 use crate::{
 	mock::{get_default_accounts, region_id},
-	xc_regions::XcRegions,
+	traits::RegionMetadata,
+	types::XcRegionsError,
+	xc_regions::{RegionInitialized, XcRegions},
 	REGIONS_COLLECTION_ID,
 };
-use ink::env::{test::DefaultAccounts, DefaultEnvironment};
+use ink::env::{
+	test::{set_caller, DefaultAccounts},
+	DefaultEnvironment,
+};
 use openbrush::contracts::psp34::{Id, PSP34};
-use primitives::{assert_ok, uniques::ItemDetails};
+use primitives::{
+	assert_ok,
+	coretime::{RawRegionId, Region},
+	uniques::ItemDetails,
+	Version,
+};
+
+type Event = <XcRegions as ::ink::reflect::ContractEventBase>::Type;
 
 #[ink::test]
 fn mock_environemnt_helper_functions_work() {
@@ -89,11 +101,53 @@ fn psp34_implementation_works() {
 
 #[ink::test]
 fn init_works() {
-	/*
 	let DefaultAccounts::<DefaultEnvironment> { alice, bob, .. } = get_default_accounts();
-	let mut _xc_regions = XcRegions::new();
+	let mut xc_regions = XcRegions::new();
 
-	// Cannot initialize a region that doesn't exist:
-	//assert_eq!(xc_regions.init());
-	*/
+	// 1. Cannot initialize a region that doesn't exist:
+	assert_eq!(xc_regions.init(0, Region::default()), Err(XcRegionsError::CannotInitialize));
+
+	// 2. Cannot initialize a region that is not owned by the caller
+	assert_ok!(xc_regions.mint(region_id(0), alice));
+	set_caller::<DefaultEnvironment>(bob);
+	assert_eq!(xc_regions.init(0, Region::default()), Err(XcRegionsError::CannotInitialize));
+
+	set_caller::<DefaultEnvironment>(alice);
+	// 3. Initialization doesn't work with incorrect metadata:
+	let invalid_metadata = Region { begin: 1, end: 2, core: 0, mask: Default::default() };
+	assert_eq!(xc_regions.init(0, invalid_metadata), Err(XcRegionsError::InvalidMetadata));
+
+	// 4. Initialization works with correct metadata and the right caller:
+	assert_ok!(xc_regions.init(0, Region::default()));
+
+	assert_eq!(xc_regions.regions.get(0), Some(Region::default()));
+	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
+
+	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
+	assert_init_event(&emitted_events[0], 0, Region::default(), 0);
+
+	// TODO: test version incrementation in a separate test.
+}
+
+// TODO: can probably make this a macro for all events to avoid code duplication.
+fn assert_init_event(
+	event: &ink::env::test::EmittedEvent,
+	expected_region_id: RawRegionId,
+	expected_metadata: Region,
+	expected_version: Version,
+) {
+	let decoded_event = <Event as scale::Decode>::decode(&mut &event.data[..])
+		.expect("encountered invalid contract event data buffer");
+	if let Event::RegionInitialized(RegionInitialized { region_id, metadata, version }) =
+		decoded_event
+	{
+		assert_eq!(
+			region_id, expected_region_id,
+			"encountered invalid RegionInitialized.region_id"
+		);
+		assert_eq!(metadata, expected_metadata, "encountered invalid RegionInitialized.metadata");
+		assert_eq!(version, expected_version, "encountered invalid RegionInitialized.version");
+	} else {
+		panic!("encountered unexpected event kind: expected a RegionInitialized event")
+	}
 }

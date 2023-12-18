@@ -35,7 +35,7 @@ pub mod xc_regions {
 		REGIONS_COLLECTION_ID,
 	};
 	use ink::{
-		codegen::Env,
+		codegen::{EmitEvent, Env},
 		prelude::{string::ToString, vec::Vec},
 		storage::Mapping,
 	};
@@ -70,6 +70,27 @@ pub mod xc_regions {
 			AccountId,
 			Vec<(primitives::uniques::CollectionId, primitives::coretime::RawRegionId)>,
 		>,
+	}
+
+	/// Events
+	#[ink(event)]
+	pub struct RegionInitialized {
+		/// The identifier of the region that got initialized.
+		#[ink(topic)]
+		pub(crate) region_id: RawRegionId,
+		/// The associated metadata.
+		pub(crate) metadata: Region,
+		/// The version of the metadata. This is automatically set by the contract each time the
+		/// same region is intiialized.
+		pub(crate) version: Version,
+	}
+
+	/// Events
+	#[ink(event)]
+	pub struct RegionDestroyed {
+		/// The identifier of the region that got destroyed.
+		#[ink(topic)]
+		pub(crate) region_id: RawRegionId,
 	}
 
 	impl PSP34 for XcRegions {
@@ -164,19 +185,28 @@ pub mod xc_regions {
 				XcRegionsError::CannotInitialize
 			);
 
-			// Do a sanity check to ensure that the provided region metadata matches with the region
-			// id.
+			// Do a sanity check to ensure that the provided region metadata matches with the
+			// metadata extracted from the region id.
 			let region_id = RegionId::from(raw_region_id);
 			ensure!(region_id.begin == region.begin, XcRegionsError::InvalidMetadata);
 			ensure!(region_id.core == region.core, XcRegionsError::InvalidMetadata);
 			ensure!(region_id.mask == region.mask, XcRegionsError::InvalidMetadata);
 
-			let version = self.metadata_versions.get(raw_region_id).unwrap_or_default();
+			let new_version = if let Some(version) = self.metadata_versions.get(raw_region_id) {
+				version.saturating_add(1)
+			} else {
+				Default::default()
+			};
 
-			self.metadata_versions.insert(raw_region_id, &version.saturating_add(1));
+			self.metadata_versions.insert(raw_region_id, &new_version);
 			self.regions.insert(raw_region_id, &region);
 
-			// TODO: emit event
+			self.env().emit_event(RegionInitialized {
+				region_id: raw_region_id,
+				metadata: region,
+				version: new_version,
+			});
+
 			Ok(())
 		}
 
@@ -204,7 +234,7 @@ pub mod xc_regions {
 			ensure!(!self.exists(region_id), XcRegionsError::NotAllowed);
 			self.regions.remove(region_id);
 
-			// TODO: emit event
+			self.env().emit_event(RegionDestroyed { region_id });
 			Ok(())
 		}
 	}

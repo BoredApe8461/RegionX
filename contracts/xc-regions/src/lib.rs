@@ -41,7 +41,7 @@ pub mod xc_regions {
 	};
 	use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
 	use primitives::{
-		coretime::{Region, RegionId},
+		coretime::{RawRegionId, Region, RegionId},
 		ensure,
 		uniques::{CollectionId, UniquesCall},
 		RuntimeCall, Version,
@@ -54,13 +54,13 @@ pub mod xc_regions {
 	#[ink(storage)]
 	#[derive(Default, Storage)]
 	pub struct XcRegions {
-		pub regions: Mapping<RegionId, Region>,
-		pub metadata_versions: Mapping<RegionId, Version>,
+		pub regions: Mapping<RawRegionId, Region>,
+		pub metadata_versions: Mapping<RawRegionId, Version>,
 		// Mock state only used for testing. In production the contract is reading the state from
 		// the underlying uniques pallet.
 		#[cfg(test)]
 		pub items: Mapping<
-			(primitives::uniques::CollectionId, primitives::coretime::RegionId),
+			(primitives::uniques::CollectionId, primitives::coretime::RawRegionId),
 			primitives::uniques::ItemDetails,
 		>,
 		// Mock state only used for testing. In production the contract is reading the state from
@@ -68,7 +68,7 @@ pub mod xc_regions {
 		#[cfg(test)]
 		pub account: Mapping<
 			AccountId,
-			Vec<(primitives::uniques::CollectionId, primitives::coretime::RegionId)>,
+			Vec<(primitives::uniques::CollectionId, primitives::coretime::RawRegionId)>,
 		>,
 	}
 
@@ -154,23 +154,34 @@ pub mod xc_regions {
 
 	impl RegionMetadata for XcRegions {
 		#[ink(message)]
-		fn init(&mut self, region_id: RegionId, region: Region) -> Result<(), XcRegionsError> {
+		fn init(
+			&mut self,
+			raw_region_id: RawRegionId,
+			region: Region,
+		) -> Result<(), XcRegionsError> {
 			ensure!(
-				Some(self.env().caller()) == self.owner_of(Id::U128(region_id)),
+				Some(self.env().caller()) == self.owner_of(Id::U128(raw_region_id)),
 				XcRegionsError::CannotInitialize
 			);
 
-			let version = self.metadata_versions.get(region_id).unwrap_or_default();
+			// Do a sanity check to ensure that the provided region metadata matches with the region
+			// id.
+			let region_id = RegionId::from(raw_region_id);
+			ensure!(region_id.begin == region.begin, XcRegionsError::InvalidMetadata);
+			ensure!(region_id.core == region.core, XcRegionsError::InvalidMetadata);
+			ensure!(region_id.mask == region.mask, XcRegionsError::InvalidMetadata);
 
-			self.metadata_versions.insert(region_id, &version.saturating_add(1));
-			self.regions.insert(region_id, &region);
+			let version = self.metadata_versions.get(raw_region_id).unwrap_or_default();
+
+			self.metadata_versions.insert(raw_region_id, &version.saturating_add(1));
+			self.regions.insert(raw_region_id, &region);
 
 			// TODO: emit event
 			Ok(())
 		}
 
 		#[ink(message)]
-		fn get_metadata(&self, region_id: RegionId) -> Result<VersionedRegion, XcRegionsError> {
+		fn get_metadata(&self, region_id: RawRegionId) -> Result<VersionedRegion, XcRegionsError> {
 			// We must first ensure that the region is still present on this chain before retrieving
 			// the metadata.
 			ensure!(self.exists(region_id), XcRegionsError::RegionNotFound);
@@ -187,7 +198,7 @@ pub mod xc_regions {
 		}
 
 		#[ink(message)]
-		fn destroy(&mut self, region_id: RegionId) -> Result<(), XcRegionsError> {
+		fn destroy(&mut self, region_id: RawRegionId) -> Result<(), XcRegionsError> {
 			// We only allow the destruction of regions that no longer exist in the underlying nft
 			// pallet.
 			ensure!(!self.exists(region_id), XcRegionsError::NotAllowed);
@@ -206,7 +217,7 @@ pub mod xc_regions {
 	}
 
 	impl XcRegions {
-		fn exists(&self, region_id: RegionId) -> bool {
+		fn exists(&self, region_id: RawRegionId) -> bool {
 			if let Ok(maybe_item) = self.env().extension().item(REGIONS_COLLECTION_ID, region_id) {
 				maybe_item.is_some()
 			} else {
@@ -214,7 +225,7 @@ pub mod xc_regions {
 			}
 		}
 
-		fn owner(&self, region_id: RegionId) -> Option<AccountId> {
+		fn owner(&self, region_id: RawRegionId) -> Option<AccountId> {
 			#[cfg(not(test))]
 			{
 				self.env().extension().owner(REGIONS_COLLECTION_ID, region_id).ok()?
@@ -226,7 +237,7 @@ pub mod xc_regions {
 			}
 		}
 
-		fn owned(&self, who: AccountId) -> Vec<(CollectionId, RegionId)> {
+		fn owned(&self, who: AccountId) -> Vec<(CollectionId, RawRegionId)> {
 			#[cfg(not(test))]
 			{
 				self.env().extension().owned(who).unwrap_or_default()
@@ -244,7 +255,7 @@ pub mod xc_regions {
 	impl XcRegions {
 		pub fn mint(
 			&mut self,
-			id: (CollectionId, RegionId),
+			id: (CollectionId, RawRegionId),
 			owner: AccountId,
 		) -> Result<(), &'static str> {
 			ensure!(self.items.get((id.0, id.1)).is_none(), "Item already exists");
@@ -265,7 +276,7 @@ pub mod xc_regions {
 			Ok(())
 		}
 
-		pub fn burn(&mut self, id: (CollectionId, RegionId)) -> Result<(), &'static str> {
+		pub fn burn(&mut self, id: (CollectionId, RawRegionId)) -> Result<(), &'static str> {
 			let Some(owner) = self.items.get((id.0, id.1)).map(|a| a.owner) else {
 				return Err("Item not found")
 			};
@@ -299,7 +310,22 @@ pub mod xc_regions {
 		type E2EResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 		#[ink_e2e::test]
-		async fn test_1(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
+		async fn test_1(
+			mut client: ink_e2e::Client<C, environment::ExtendedEnvironment>,
+		) -> E2EResult<()> {
+			let mut mock = MockExtension::default();
+			register_chain_extensions(mock);
+
+			let constructor = XcRegionsRef::new();
+
+			/*
+			let address = client
+				.instantiate("xc_regions", &ink_e2e::alice(), constructor, 0, None)
+				.await
+				.expect("instantiate failed")
+				.account_id;
+				*/
+
 			Ok(())
 		}
 	}

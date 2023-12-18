@@ -14,7 +14,7 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	mock::{get_default_accounts, region_id, register_chain_extensions, MockExtension},
+	mock::{get_default_accounts, region_id},
 	xc_regions::XcRegions,
 	REGIONS_COLLECTION_ID,
 };
@@ -66,10 +66,7 @@ fn mock_environemnt_helper_functions_work() {
 
 #[ink::test]
 fn psp34_implementation_works() {
-	let mock = MockExtension::default();
 	let DefaultAccounts::<DefaultEnvironment> { alice, bob, .. } = get_default_accounts();
-
-	register_chain_extensions(mock);
 	let mut xc_regions = XcRegions::new();
 
 	// Initialize some state:
@@ -88,4 +85,15 @@ fn psp34_implementation_works() {
 	assert_eq!(xc_regions.balance_of(alice), 1);
 	assert_ok!(xc_regions.burn(region_id(1)));
 	assert_eq!(xc_regions.balance_of(bob), 0);
+}
+
+#[ink::test]
+fn init_works() {
+	/*
+	let DefaultAccounts::<DefaultEnvironment> { alice, bob, .. } = get_default_accounts();
+	let mut _xc_regions = XcRegions::new();
+
+	// Cannot initialize a region that doesn't exist:
+	//assert_eq!(xc_regions.init());
+	*/
 }

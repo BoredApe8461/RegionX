@@ -26,6 +26,8 @@ pub enum XcRegionsError {
 	RegionNotFound,
 	/// No metadata was found for the region.
 	MetadataNotFound,
+	/// The provided metadata doesn't match with the metadata extracted from the region id.
+	InvalidMetadata,
 	/// The associated metadata version was not found.
 	VersionNotFound,
 	/// The operation is not allowed.
@@ -43,6 +45,7 @@ impl core::fmt::Display for XcRegionsError {
 			XcRegionsError::CannotInitialize => write!(f, "CannotInitialize"),
 			XcRegionsError::RegionNotFound => write!(f, "RegionNotFound"),
 			XcRegionsError::MetadataNotFound => write!(f, "MetadataNotFound"),
+			XcRegionsError::InvalidMetadata => write!(f, "InvalidMetadata"),
 			XcRegionsError::VersionNotFound => write!(f, "VersionNotFound"),
 			XcRegionsError::NotAllowed => write!(f, "NotAllowed"),
 			XcRegionsError::RuntimeError => write!(f, "RuntimeError"),

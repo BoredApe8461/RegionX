@@ -14,16 +14,16 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::types::{VersionedRegion, XcRegionsError};
-use primitives::coretime::{Region, RegionId};
+use primitives::coretime::{RawRegionId, Region};
 
 #[openbrush::trait_definition]
 pub trait RegionMetadata {
 	#[ink(message)]
-	fn init(&mut self, id: RegionId, metadata: Region) -> Result<(), XcRegionsError>;
+	fn init(&mut self, id: RawRegionId, metadata: Region) -> Result<(), XcRegionsError>;
 
 	#[ink(message)]
-	fn get_metadata(&self, id: RegionId) -> Result<VersionedRegion, XcRegionsError>;
+	fn get_metadata(&self, id: RawRegionId) -> Result<VersionedRegion, XcRegionsError>;
 
 	#[ink(message)]
-	fn destroy(&mut self, id: RegionId) -> Result<(), XcRegionsError>;
+	fn destroy(&mut self, id: RawRegionId) -> Result<(), XcRegionsError>;
 }

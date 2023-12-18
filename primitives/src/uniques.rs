@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{coretime::RegionId, Balance};
+use crate::{coretime::RawRegionId, Balance};
 use openbrush::traits::AccountId;
 
 // The type used to identify collections in the underlying uniques pallet.
@@ -23,19 +23,20 @@ pub type CollectionId = u32;
 pub enum UniquesCall {
 	// TODO: use proper index based on the underlying runtime.
 	#[codec(index = 8)]
-	Transfer { collection: CollectionId, item: RegionId, dest: AccountId },
+	Transfer { collection: CollectionId, item: RawRegionId, dest: AccountId },
 	#[codec(index = 25)]
-	ApproveTransfer { collection: CollectionId, item: RegionId, delegate: AccountId },
+	ApproveTransfer { collection: CollectionId, item: RawRegionId, delegate: AccountId },
 	#[codec(index = 26)]
 	CancelApproval {
 		collection: CollectionId,
-		item: RegionId,
+		item: RawRegionId,
 		maybe_check_delegate: Option<AccountId>,
 	},
 }
 
 /// Information concerning the ownership of a single unique item.
 #[derive(scale::Decode, scale::Encode, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
 pub struct ItemDetails {
 	/// The owner of this item.
 	pub owner: AccountId,

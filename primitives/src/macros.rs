@@ -39,3 +39,10 @@ macro_rules! assert_ok {
 		assert_eq!($x, Ok($y));
 	};
 }
+
+#[macro_export]
+macro_rules! address_of {
+	($account:ident) => {
+		ink_e2e::account_id(ink_e2e::AccountKeyring::$account)
+	};
+}

@@ -16,20 +16,7 @@
 /// The type used for identifying regions.
 ///
 /// This `u128` actually holds parts of the region metadata.
-///
-/// The type that is encoded into this `u128`:
-///
-/// ```ignore
-/// pub struct RegionId {
-/// 	    /// The timeslice at which this Region begins.
-/// 	    pub begin: Timeslice,
-/// 	    /// The index of the Polakdot Core on which this Region will be scheduled.
-/// 	    pub core: CoreIndex,
-/// 	    /// The regularity parts in which this Region will be scheduled.
-/// 	    pub mask: CoreMask,
-/// }
-/// ```
-pub type RegionId = u128;
+pub type RawRegionId = u128;
 
 /// Relay chain block number.
 pub type Timeslice = u32;
@@ -43,15 +30,55 @@ pub type CoreIndex = u16;
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
 pub struct CoreMask([u8; 10]);
 
+impl From<u128> for CoreMask {
+	fn from(x: u128) -> Self {
+		let mut v = [0u8; 10];
+		v.iter_mut().rev().fold(x, |a, i| {
+			*i = a as u8;
+			a >> 8
+		});
+		Self(v)
+	}
+}
+impl From<CoreMask> for u128 {
+	fn from(x: CoreMask) -> Self {
+		x.0.into_iter().fold(0u128, |a, i| a << 8 | i as u128)
+	}
+}
+
+/// Self-describing identity for a Region of Bulk Coretime.
+#[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
+pub struct RegionId {
+	/// The timeslice at which the reigon starts.
+	pub begin: Timeslice,
+	/// The index of the relay chain Core on which this Region will be scheduled.
+	pub core: CoreIndex,
+	/// The regularity parts in which this Region will be scheduled.
+	pub mask: CoreMask,
+}
+
+impl From<RawRegionId> for RegionId {
+	fn from(x: u128) -> Self {
+		Self { begin: (x >> 96) as u32, core: (x >> 80) as u16, mask: x.into() }
+	}
+}
+
+impl From<RegionId> for RawRegionId {
+	fn from(x: RegionId) -> Self {
+		(x.begin as u128) << 96 | (x.core as u128) << 80 | u128::from(x.mask)
+	}
+}
+
 #[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
 pub struct Region {
 	/// The timeslice at which the reigon starts.
-	begin: Timeslice,
+	pub begin: Timeslice,
 	/// The timeslice at which the region ends.
-	end: Timeslice,
+	pub end: Timeslice,
 	/// The index of the relay chain Core on which this Region will be scheduled.
-	core: CoreIndex,
+	pub core: CoreIndex,
 	/// The regularity parts in which this Region will be scheduled.
-	mask: CoreMask,
+	pub mask: CoreMask,
 }

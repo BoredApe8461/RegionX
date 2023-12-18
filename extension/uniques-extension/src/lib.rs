@@ -17,7 +17,7 @@
 use ink::prelude::vec::Vec;
 use openbrush::traits::AccountId;
 use primitives::{
-	coretime::RegionId,
+	coretime::RawRegionId,
 	uniques::{CollectionId, ItemDetails},
 };
 use scale::{Decode, Encode};
@@ -35,17 +35,17 @@ pub trait UniquesExtension {
 	fn owner(
 		&self,
 		collection_id: CollectionId,
-		item_id: RegionId,
+		item_id: RawRegionId,
 	) -> Result<Option<AccountId>, UniquesError>;
 
 	/// All items owned by `who`.
-	fn owned(&self, who: AccountId) -> Result<Vec<(CollectionId, RegionId)>, UniquesError>;
+	fn owned(&self, who: AccountId) -> Result<Vec<(CollectionId, RawRegionId)>, UniquesError>;
 
 	/// An item within a collection.
 	fn item(
 		&self,
 		collection_id: CollectionId,
-		item_id: RegionId,
+		item_id: RawRegionId,
 	) -> Result<Option<ItemDetails>, UniquesError>;
 }
 

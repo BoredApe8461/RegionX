@@ -183,6 +183,9 @@ pub mod xc_regions {
 				XcRegionsError::CannotInitialize
 			);
 
+			// Cannot initialize a region that already has metadata stored.
+			ensure!(self.regions.get(raw_region_id).is_none(), XcRegionsError::CannotInitialize);
+
 			// Do a sanity check to ensure that the provided region metadata matches with the
 			// metadata extracted from the region id.
 			let region_id = RegionId::from(raw_region_id);

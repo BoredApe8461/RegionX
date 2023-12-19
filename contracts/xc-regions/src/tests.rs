@@ -126,7 +126,8 @@ fn init_works() {
 	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
 	assert_init_event(&emitted_events.last().unwrap(), 0, Region::default(), 0);
 
-	// TODO: test version incrementation in a separate test.
+	// 5. Calling init for an already initialized region will fail.
+	assert_eq!(xc_regions.init(0, Region::default()), Err(XcRegionsError::CannotInitialize));
 }
 
 #[ink::test]
@@ -140,6 +141,9 @@ fn remove_works() {
 
 	assert_eq!(xc_regions.regions.get(0), Some(Region::default()));
 	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
+
+	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
+	assert_init_event(&emitted_events.last().unwrap(), 0, Region::default(), 0);
 
 	// Cannot remove a region that exists.
 	assert_eq!(xc_regions.remove(0), Err(XcRegionsError::CannotRemove));
@@ -156,6 +160,49 @@ fn remove_works() {
 
 	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
 	assert_removed_event(&emitted_events.last().unwrap(), 0);
+}
+
+#[ink::test]
+fn metadata_version_gets_updated() {
+	let DefaultAccounts::<DefaultEnvironment> { alice, .. } = get_default_accounts();
+	let mut xc_regions = XcRegions::new();
+
+	// We first mint and initialize a region.
+	assert_ok!(xc_regions.mint(region_id(0), alice));
+	assert_ok!(xc_regions.init(0, Region::default()));
+
+	assert_eq!(xc_regions.regions.get(0), Some(Region::default()));
+	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
+
+	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
+	assert_init_event(&emitted_events.last().unwrap(), 0, Region::default(), 0);
+
+	// In reality the updating the metadata would require the asset to be destroyed, transferred
+	// back to the reserve chain via a cross-chain transfer, then sent back and re-initialized with
+	// the `init` call.
+
+	// In this test we simulate this by burning and minting the asset back again.
+
+	// Remove the region:
+	assert_ok!(xc_regions.burn(region_id(0)));
+	assert_ok!(xc_regions.remove(0));
+
+	assert_eq!(xc_regions.regions.get(0), None);
+	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
+
+	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
+	assert_removed_event(&emitted_events.last().unwrap(), 0);
+
+	// Mint and initialize the region again:
+	assert_ok!(xc_regions.mint(region_id(0), alice));
+	assert_ok!(xc_regions.init(0, Region::default()));
+
+	assert_eq!(xc_regions.regions.get(0), Some(Region::default()));
+	// The metadata version must be incremented to indicate the change:
+	assert_eq!(xc_regions.metadata_versions.get(0), Some(1));
+
+	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
+	assert_init_event(&emitted_events.last().unwrap(), 0, Region::default(), 1);
 }
 
 // TODO / Nice to have: can probably make this a macro for all events to avoid code duplication.

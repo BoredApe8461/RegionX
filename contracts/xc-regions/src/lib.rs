@@ -221,7 +221,8 @@ pub mod xc_regions {
 				return Err(XcRegionsError::MetadataNotFound)
 			};
 			let Some(version) = self.metadata_versions.get(region_id) else {
-				// This should never happen.
+				// This should never really happen; if a region has its metadata stored, its version
+				// should be stored as well.
 				return Err(XcRegionsError::VersionNotFound)
 			};
 

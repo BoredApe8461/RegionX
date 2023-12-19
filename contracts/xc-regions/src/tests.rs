@@ -16,7 +16,7 @@
 use crate::{
 	mock::{get_default_accounts, region_id},
 	traits::RegionMetadata,
-	types::XcRegionsError,
+	types::{VersionedRegion, XcRegionsError},
 	xc_regions::{RegionInitialized, RegionRemoved, XcRegions},
 	REGIONS_COLLECTION_ID,
 };
@@ -203,6 +203,25 @@ fn metadata_version_gets_updated() {
 
 	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
 	assert_init_event(&emitted_events.last().unwrap(), 0, Region::default(), 1);
+}
+
+#[ink::test]
+fn get_metadata_works() {
+	let DefaultAccounts::<DefaultEnvironment> { alice, bob, .. } = get_default_accounts();
+	let mut xc_regions = XcRegions::new();
+
+	// Cannot get the metadata of a region that doesn't exist:
+	assert_eq!(xc_regions.get_metadata(0), Err(XcRegionsError::RegionNotFound));
+
+	// Minting a region without initializing it.
+	assert_ok!(xc_regions.mint(region_id(0), alice));
+	assert_eq!(xc_regions.get_metadata(0), Err(XcRegionsError::MetadataNotFound));
+
+	assert_ok!(xc_regions.init(0, Region::default()));
+	assert_eq!(
+		xc_regions.get_metadata(0),
+		Ok(VersionedRegion { version: 0, region: Region::default() })
+	);
 }
 
 // TODO / Nice to have: can probably make this a macro for all events to avoid code duplication.

@@ -34,6 +34,32 @@ pub enum UniquesCall {
 	},
 }
 
+#[derive(scale::Decode, scale::Encode, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
+pub struct CollectionDetails {
+	/// Can change `owner`, `issuer`, `freezer` and `admin` accounts.
+	pub owner: AccountId,
+	/// Can mint tokens.
+	pub issuer: AccountId,
+	/// Can thaw tokens, force transfers and burn tokens from any account.
+	pub admin: AccountId,
+	/// Can freeze tokens.
+	pub freezer: AccountId,
+	/// The total balance deposited for the all storage associated with this collection.
+	/// Used by `destroy`.
+	pub total_deposit: Balance,
+	/// If `true`, then no deposit is needed to hold items of this collection.
+	pub free_holding: bool,
+	/// The total number of outstanding items of this collection.
+	pub items: u32,
+	/// The total number of outstanding item metadata of this collection.
+	pub item_metadatas: u32,
+	/// The total number of attributes for this collection.
+	pub attributes: u32,
+	/// Whether the collection is frozen for non-admin transfers.
+	pub is_frozen: bool,
+}
+
 /// Information concerning the ownership of a single unique item.
 #[derive(scale::Decode, scale::Encode, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]

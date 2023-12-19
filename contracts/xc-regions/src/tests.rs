@@ -207,7 +207,7 @@ fn metadata_version_gets_updated() {
 
 #[ink::test]
 fn get_metadata_works() {
-	let DefaultAccounts::<DefaultEnvironment> { alice, bob, .. } = get_default_accounts();
+	let DefaultAccounts::<DefaultEnvironment> { alice, .. } = get_default_accounts();
 	let mut xc_regions = XcRegions::new();
 
 	// Cannot get the metadata of a region that doesn't exist:

@@ -21,7 +21,7 @@ use ink::env::{
 use openbrush::traits::AccountId;
 use primitives::{
 	coretime::RawRegionId,
-	uniques::{CollectionId, ItemDetails},
+	uniques::{CollectionDetails, CollectionId, ItemDetails},
 };
 use uniques_extension::{UniquesError, UniquesExtension};
 
@@ -36,24 +36,29 @@ impl UniquesExtension for MockExtension {
 		_collection_id: CollectionId,
 		_region_id: RawRegionId,
 	) -> Result<Option<AccountId>, UniquesError> {
-		// In test environment the state isn't read from chain extensions.
-		unimplemented!()
+		todo!()
 	}
 
 	/// All items owned by `who`.
 	fn owned(&self, _who: AccountId) -> Result<Vec<(CollectionId, RawRegionId)>, UniquesError> {
-		// In test environment the state isn't read from chain extensions.
-		unimplemented!()
+		todo!()
 	}
 
-	/// An item within a collection.
+	/// Returns the details of a collection.
+	fn collection(
+		&self,
+		_collection_id: CollectionId,
+	) -> Result<Option<CollectionDetails>, UniquesError> {
+		todo!()
+	}
+
+	/// Returns the details of an item within a collection.
 	fn item(
 		&self,
 		_collection_id: CollectionId,
 		_region_id: RawRegionId,
 	) -> Result<Option<ItemDetails>, UniquesError> {
-		// In test environment the state isn't read from chain extensions.
-		unimplemented!()
+		todo!()
 	}
 }
 

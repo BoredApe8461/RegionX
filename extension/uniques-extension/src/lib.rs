@@ -18,12 +18,12 @@ use ink::prelude::vec::Vec;
 use openbrush::traits::AccountId;
 use primitives::{
 	coretime::RawRegionId,
-	uniques::{CollectionId, ItemDetails},
+	uniques::{CollectionDetails, CollectionId, ItemDetails},
 };
 use scale::{Decode, Encode};
 
-/// These are only the functions are essential for the xc-regions contract. However, the underlying
-/// chain extension is likely to implement many additional ones.
+/// These are only the functions that are essential for the xc-regions contract. However, the
+/// underlying chain extension is likely to implement many additional ones.
 ///
 /// We will utilize the chain extension solely for state reads, as extrinsics can be executed
 /// through `call_runtime`, which is more future-proof approach.
@@ -41,7 +41,13 @@ pub trait UniquesExtension {
 	/// All items owned by `who`.
 	fn owned(&self, who: AccountId) -> Result<Vec<(CollectionId, RawRegionId)>, UniquesError>;
 
-	/// An item within a collection.
+	/// Returns the details of a collection.
+	fn collection(
+		&self,
+		collection_id: CollectionId,
+	) -> Result<Option<CollectionDetails>, UniquesError>;
+
+	/// Returns the details of an item within a collection.
 	fn item(
 		&self,
 		collection_id: CollectionId,

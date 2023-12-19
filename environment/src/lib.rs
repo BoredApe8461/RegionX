@@ -30,6 +30,5 @@ impl Environment for ExtendedEnvironment {
 	type BlockNumber = <DefaultEnvironment as Environment>::BlockNumber;
 	type Timestamp = <DefaultEnvironment as Environment>::Timestamp;
 
-	// TODO: add uniques chain extension
 	type ChainExtension = Extension;
 }

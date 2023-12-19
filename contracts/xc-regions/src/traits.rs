@@ -16,6 +16,7 @@
 use crate::types::{VersionedRegion, XcRegionsError};
 use primitives::coretime::{RawRegionId, Region};
 
+/// This is based on: https://hackmd.io/@Szegoo/rkryxwdIp
 #[openbrush::trait_definition]
 pub trait RegionMetadata {
 	#[ink(message)]

@@ -46,7 +46,6 @@ pub mod xc_regions {
 		uniques::{CollectionId, ItemDetails, UniquesCall},
 		RuntimeCall, Version,
 	};
-	#[cfg(not(test))]
 	use uniques_extension::UniquesExtension;
 
 	#[ink(storage)]
@@ -55,14 +54,14 @@ pub mod xc_regions {
 		pub regions: Mapping<RawRegionId, Region>,
 		pub metadata_versions: Mapping<RawRegionId, Version>,
 		// Mock state only used for testing. In production the contract is reading the state from
-		// the underlying uniques pallet.
+		// the chain extension.
 		#[cfg(test)]
 		pub items: Mapping<
 			(primitives::uniques::CollectionId, primitives::coretime::RawRegionId),
 			ItemDetails,
 		>,
 		// Mock state only used for testing. In production the contract is reading the state from
-		// the underlying uniques pallet.
+		// the chain extension.
 		#[cfg(test)]
 		pub account: Mapping<
 			AccountId,
@@ -70,7 +69,6 @@ pub mod xc_regions {
 		>,
 	}
 
-	/// Events
 	#[ink(event)]
 	pub struct RegionInitialized {
 		/// The identifier of the region that got initialized.
@@ -78,12 +76,11 @@ pub mod xc_regions {
 		pub(crate) region_id: RawRegionId,
 		/// The associated metadata.
 		pub(crate) metadata: Region,
-		/// The version of the metadata. This is automatically set by the contract each time the
-		/// same region is intiialized.
+		/// The version of the metadata. This is incremented by the contract each time the same
+		/// region is initialized.
 		pub(crate) version: Version,
 	}
 
-	/// Events
 	#[ink(event)]
 	pub struct RegionRemoved {
 		/// The identifier of the region that got removed.
@@ -104,6 +101,7 @@ pub mod xc_regions {
 
 		#[ink(message)]
 		fn owner_of(&self, id: Id) -> Option<AccountId> {
+			// We expect the region id to be a `u128`.
 			if let Id::U128(region_id) = id {
 				self.owner(region_id)
 			} else {
@@ -112,9 +110,15 @@ pub mod xc_regions {
 		}
 
 		#[ink(message)]
-		fn allowance(&self, _owner: AccountId, _operator: AccountId, _id: Option<Id>) -> bool {
-			// Resolvable with: https://github.com/paritytech/polkadot-sdk/pull/2727
-			todo!()
+		fn allowance(&self, owner: AccountId, operator: AccountId, id: Option<Id>) -> bool {
+			// We expect the region id to be a `u128`.
+			let Some(Id::U128(region_id)) = id else { return false };
+
+			if let Some(item_details) = self.item(region_id) {
+				item_details.owner == owner && item_details.approved == Some(operator)
+			} else {
+				false
+			}
 		}
 
 		#[ink(message)]
@@ -124,7 +128,8 @@ pub mod xc_regions {
 			id: Option<Id>,
 			approved: bool,
 		) -> Result<(), PSP34Error> {
-			let Some(Id::U128(id)) = id else {
+			// We expect the region id to be a `u128`.
+			let Some(Id::U128(region_id)) = id else {
 				return Err(PSP34Error::Custom(XcRegionsError::InvalidRegionId.to_string()))
 			};
 
@@ -133,7 +138,7 @@ pub mod xc_regions {
 				self.env()
 					.call_runtime(&RuntimeCall::Uniques(UniquesCall::ApproveTransfer {
 						collection: REGIONS_COLLECTION_ID,
-						item: id,
+						item: region_id,
 						delegate: operator,
 					}))
 					.map_err(|_| PSP34Error::Custom(XcRegionsError::RuntimeError.to_string()))
@@ -142,7 +147,7 @@ pub mod xc_regions {
 				self.env()
 					.call_runtime(&RuntimeCall::Uniques(UniquesCall::CancelApproval {
 						collection: REGIONS_COLLECTION_ID,
-						item: id,
+						item: region_id,
 						maybe_check_delegate: Some(operator),
 					}))
 					.map_err(|_| PSP34Error::Custom(XcRegionsError::RuntimeError.to_string()))
@@ -166,8 +171,11 @@ pub mod xc_regions {
 
 		#[ink(message)]
 		fn total_supply(&self) -> Balance {
-			// Unsupported since it would reuire a lot of storage reads.
-			Default::default()
+			if let Ok(Some(collection)) = self.env().extension().collection(REGIONS_COLLECTION_ID) {
+				collection.items.into()
+			} else {
+				Default::default()
+			}
 		}
 	}
 
@@ -231,7 +239,7 @@ pub mod xc_regions {
 
 		#[ink(message)]
 		fn remove(&mut self, region_id: RawRegionId) -> Result<(), XcRegionsError> {
-			// We only allow the destruction of regions that no longer exist in the underlying nft
+			// We only allow the removal of regions that no longer exist in the underlying nft
 			// pallet.
 			ensure!(!self.exists(region_id), XcRegionsError::CannotRemove);
 			self.regions.remove(region_id);
@@ -258,6 +266,7 @@ pub mod xc_regions {
 			{
 				self.env().extension().item(REGIONS_COLLECTION_ID, item_id).ok()?
 			}
+			// When testing we use mock state.
 			#[cfg(test)]
 			{
 				self.items.get((REGIONS_COLLECTION_ID, item_id))
@@ -269,7 +278,7 @@ pub mod xc_regions {
 			{
 				self.env().extension().owner(REGIONS_COLLECTION_ID, region_id).ok()?
 			}
-			// If testing we use mock state.
+			// When testing we use mock state.
 			#[cfg(test)]
 			{
 				self.items.get((REGIONS_COLLECTION_ID, region_id)).map(|a| a.owner)
@@ -281,7 +290,7 @@ pub mod xc_regions {
 			{
 				self.env().extension().owned(who).unwrap_or_default()
 			}
-			// If testing we use mock state.
+			// When testing we use mock state.
 			#[cfg(test)]
 			{
 				self.account.get(who).map(|a| a).unwrap_or_default()
@@ -357,7 +366,7 @@ pub mod xc_regions {
 
 			let constructor = XcRegionsRef::new();
 
-			/*
+			/* Related issue: https://substrate.stackexchange.com/questions/10675/ink-e2e-tests-with-custom-environment
 			let address = client
 				.instantiate("xc_regions", &ink_e2e::alice(), constructor, 0, None)
 				.await

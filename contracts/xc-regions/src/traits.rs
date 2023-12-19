@@ -25,5 +25,5 @@ pub trait RegionMetadata {
 	fn get_metadata(&self, id: RawRegionId) -> Result<VersionedRegion, XcRegionsError>;
 
 	#[ink(message)]
-	fn destroy(&mut self, id: RawRegionId) -> Result<(), XcRegionsError>;
+	fn remove(&mut self, id: RawRegionId) -> Result<(), XcRegionsError>;
 }

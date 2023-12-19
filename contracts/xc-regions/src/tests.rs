@@ -17,7 +17,7 @@ use crate::{
 	mock::{get_default_accounts, region_id},
 	traits::RegionMetadata,
 	types::XcRegionsError,
-	xc_regions::{RegionInitialized, XcRegions},
+	xc_regions::{RegionInitialized, RegionRemoved, XcRegions},
 	REGIONS_COLLECTION_ID,
 };
 use ink::env::{
@@ -124,12 +124,41 @@ fn init_works() {
 	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
 
 	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
-	assert_init_event(&emitted_events[0], 0, Region::default(), 0);
+	assert_init_event(&emitted_events.last().unwrap(), 0, Region::default(), 0);
 
 	// TODO: test version incrementation in a separate test.
 }
 
-// TODO: can probably make this a macro for all events to avoid code duplication.
+#[ink::test]
+fn remove_works() {
+	let DefaultAccounts::<DefaultEnvironment> { alice, bob, .. } = get_default_accounts();
+	let mut xc_regions = XcRegions::new();
+
+	// We first mint and initialize a region.
+	assert_ok!(xc_regions.mint(region_id(0), alice));
+	assert_ok!(xc_regions.init(0, Region::default()));
+
+	assert_eq!(xc_regions.regions.get(0), Some(Region::default()));
+	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
+
+	// Cannot remove a region that exists.
+	assert_eq!(xc_regions.remove(0), Err(XcRegionsError::CannotRemove));
+
+	assert_ok!(xc_regions.burn(region_id(0)));
+
+	// Anyone has the right to remove a region that no longer exists on this chain.
+	set_caller::<DefaultEnvironment>(bob);
+	assert_ok!(xc_regions.remove(0));
+
+	assert_eq!(xc_regions.regions.get(0), None);
+	// The metadata version is still stored in the contract.
+	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
+
+	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
+	assert_removed_event(&emitted_events.last().unwrap(), 0);
+}
+
+// TODO / Nice to have: can probably make this a macro for all events to avoid code duplication.
 fn assert_init_event(
 	event: &ink::env::test::EmittedEvent,
 	expected_region_id: RawRegionId,
@@ -149,5 +178,15 @@ fn assert_init_event(
 		assert_eq!(version, expected_version, "encountered invalid RegionInitialized.version");
 	} else {
 		panic!("encountered unexpected event kind: expected a RegionInitialized event")
+	}
+}
+
+fn assert_removed_event(event: &ink::env::test::EmittedEvent, expected_region_id: RawRegionId) {
+	let decoded_event = <Event as scale::Decode>::decode(&mut &event.data[..])
+		.expect("encountered invalid contract event data buffer");
+	if let Event::RegionRemoved(RegionRemoved { region_id }) = decoded_event {
+		assert_eq!(region_id, expected_region_id, "encountered invalid RegionRemoved.region_id");
+	} else {
+		panic!("encountered unexpected event kind: expected a RegionRemoved event")
 	}
 }

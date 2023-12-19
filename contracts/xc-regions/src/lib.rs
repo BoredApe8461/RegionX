@@ -43,13 +43,11 @@ pub mod xc_regions {
 	use primitives::{
 		coretime::{RawRegionId, Region, RegionId},
 		ensure,
-		uniques::{CollectionId, UniquesCall},
+		uniques::{CollectionId, ItemDetails, UniquesCall},
 		RuntimeCall, Version,
 	};
+	#[cfg(not(test))]
 	use uniques_extension::UniquesExtension;
-
-	#[cfg(test)]
-	use primitives::uniques::ItemDetails;
 
 	#[ink(storage)]
 	#[derive(Default, Storage)]
@@ -61,7 +59,7 @@ pub mod xc_regions {
 		#[cfg(test)]
 		pub items: Mapping<
 			(primitives::uniques::CollectionId, primitives::coretime::RawRegionId),
-			primitives::uniques::ItemDetails,
+			ItemDetails,
 		>,
 		// Mock state only used for testing. In production the contract is reading the state from
 		// the underlying uniques pallet.
@@ -87,8 +85,8 @@ pub mod xc_regions {
 
 	/// Events
 	#[ink(event)]
-	pub struct RegionDestroyed {
-		/// The identifier of the region that got destroyed.
+	pub struct RegionRemoved {
+		/// The identifier of the region that got removed.
 		#[ink(topic)]
 		pub(crate) region_id: RawRegionId,
 	}
@@ -228,13 +226,13 @@ pub mod xc_regions {
 		}
 
 		#[ink(message)]
-		fn destroy(&mut self, region_id: RawRegionId) -> Result<(), XcRegionsError> {
+		fn remove(&mut self, region_id: RawRegionId) -> Result<(), XcRegionsError> {
 			// We only allow the destruction of regions that no longer exist in the underlying nft
 			// pallet.
-			ensure!(!self.exists(region_id), XcRegionsError::NotAllowed);
+			ensure!(!self.exists(region_id), XcRegionsError::CannotRemove);
 			self.regions.remove(region_id);
 
-			self.env().emit_event(RegionDestroyed { region_id });
+			self.env().emit_event(RegionRemoved { region_id });
 			Ok(())
 		}
 	}
@@ -248,10 +246,17 @@ pub mod xc_regions {
 
 	impl XcRegions {
 		fn exists(&self, region_id: RawRegionId) -> bool {
-			if let Ok(maybe_item) = self.env().extension().item(REGIONS_COLLECTION_ID, region_id) {
-				maybe_item.is_some()
-			} else {
-				false
+			self.item(region_id).is_some()
+		}
+
+		fn item(&self, item_id: RawRegionId) -> Option<ItemDetails> {
+			#[cfg(not(test))]
+			{
+				self.env().extension().item(REGIONS_COLLECTION_ID, item_id).ok()?
+			}
+			#[cfg(test)]
+			{
+				self.items.get((REGIONS_COLLECTION_ID, item_id))
 			}
 		}
 

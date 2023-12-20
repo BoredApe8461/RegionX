@@ -180,6 +180,22 @@ pub mod xc_regions {
 	}
 
 	impl RegionMetadata for XcRegions {
+		/// A function for initializing the metadata of a region. It can only be called if the
+		/// specified region exists on this chain and the caller is the actual owner of the region.
+		///
+		/// ## Arguments:
+		/// - `raw_region_id` - The `u128` encoded region identifier.
+		/// - `region` - The corresponding region metadata.
+		///
+		/// This function conducts a sanity check to verify that the metadata derived from the
+		/// raw_region_id aligns with the respective components of the metadata supplied through the
+		/// region argument.
+		///
+		/// If this is not the first time that this region is inititalized, the metadata version
+		/// will get incremented.
+		///
+		/// ## Events:
+		/// On success this ink message emits the `RegionInitialized` event.
 		#[ink(message)]
 		fn init(
 			&mut self,
@@ -219,6 +235,14 @@ pub mod xc_regions {
 			Ok(())
 		}
 
+		/// A function to retrieve all metadata associated with a specific region. This function
+		/// verifies the region's existence on this chain prior to fetching its metadata.
+		///
+		/// The function returns a VersionedRegion, encompassing the version of the retrieved
+		/// metadata that is intended for client-side verification.
+		///
+		/// ## Arguments:
+		/// - `raw_region_id` - The `u128` encoded region identifier.
 		#[ink(message)]
 		fn get_metadata(&self, region_id: RawRegionId) -> Result<VersionedRegion, XcRegionsError> {
 			// We must first ensure that the region is still present on this chain before retrieving
@@ -237,6 +261,16 @@ pub mod xc_regions {
 			Ok(VersionedRegion { version, region })
 		}
 
+		/// A function for removing the metadata associated with a region.
+		///
+		/// This function is callable by anyone, and the metadata is removed successfully if the
+		/// specific region no longer exists on this chain.
+		///
+		/// ## Arguments:
+		/// - `raw_region_id` - The `u128` encoded region identifier.
+		///
+		/// ## Events:
+		/// On success this ink message emits the `RegionRemoved` event.
 		#[ink(message)]
 		fn remove(&mut self, region_id: RawRegionId) -> Result<(), XcRegionsError> {
 			// We only allow the removal of regions that no longer exist in the underlying nft
@@ -257,10 +291,12 @@ pub mod xc_regions {
 	}
 
 	impl XcRegions {
+		/// Returns whether the region exists on this chain or not.
 		fn exists(&self, region_id: RawRegionId) -> bool {
 			self.item(region_id).is_some()
 		}
 
+		/// Returns the details of an item within a collection.
 		fn item(&self, item_id: RawRegionId) -> Option<ItemDetails> {
 			#[cfg(not(test))]
 			{
@@ -273,6 +309,7 @@ pub mod xc_regions {
 			}
 		}
 
+		/// The owner of the specific item.
 		fn owner(&self, region_id: RawRegionId) -> Option<AccountId> {
 			#[cfg(not(test))]
 			{
@@ -285,6 +322,7 @@ pub mod xc_regions {
 			}
 		}
 
+		/// All items owned by `who`.
 		fn owned(&self, who: AccountId) -> Vec<(CollectionId, RawRegionId)> {
 			#[cfg(not(test))]
 			{

@@ -13,28 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std, no_main)]
-#![feature(min_specialization)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
-#[openbrush::contract]
-pub mod coretime_market {
-	use openbrush::traits::Storage;
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, scale::Encode, scale::Decode)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
+#[obce::ink_lang::extension]
+pub struct Extension;
 
-	#[ink(storage)]
-	#[derive(Default, Storage)]
-	pub struct CoretimeMarket {
-		// FIXME: ink! smart contract boilerplate
-		foo: u8,
-	}
-
-	impl CoretimeMarket {
-		#[ink(constructor)]
-		pub fn new() -> Self {
-			Default::default()
-		}
-
-		// FIXME: ink! smart contract boilerplate
-		#[ink(message)]
-		pub fn foo(&self) {}
-	}
-}
+impl uniques_extension::UniquesExtension for Extension {}

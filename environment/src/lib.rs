@@ -12,29 +12,23 @@
 
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
-
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
-#![feature(min_specialization)]
 
-#[openbrush::contract]
-pub mod coretime_market {
-	use openbrush::traits::Storage;
+use extension::Extension;
+use ink::env::{DefaultEnvironment, Environment};
 
-	#[ink(storage)]
-	#[derive(Default, Storage)]
-	pub struct CoretimeMarket {
-		// FIXME: ink! smart contract boilerplate
-		foo: u8,
-	}
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+pub enum ExtendedEnvironment {}
 
-	impl CoretimeMarket {
-		#[ink(constructor)]
-		pub fn new() -> Self {
-			Default::default()
-		}
+impl Environment for ExtendedEnvironment {
+	const MAX_EVENT_TOPICS: usize = <DefaultEnvironment as Environment>::MAX_EVENT_TOPICS;
 
-		// FIXME: ink! smart contract boilerplate
-		#[ink(message)]
-		pub fn foo(&self) {}
-	}
+	type AccountId = <DefaultEnvironment as Environment>::AccountId;
+	type Balance = <DefaultEnvironment as Environment>::Balance;
+	type Hash = <DefaultEnvironment as Environment>::Hash;
+	type BlockNumber = <DefaultEnvironment as Environment>::BlockNumber;
+	type Timestamp = <DefaultEnvironment as Environment>::Timestamp;
+
+	type ChainExtension = Extension;
 }

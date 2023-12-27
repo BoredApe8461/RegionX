@@ -13,32 +13,21 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std, no_main)]
-#![feature(min_specialization)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
-#[openbrush::contract]
-pub mod xc_regions {
-    use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
+pub mod coretime;
+pub mod macros;
+pub mod uniques;
 
-    #[ink(storage)]
-    #[derive(Default, Storage)]
-    pub struct XcRegions {
-        #[storage_field]
-        psp34: psp34::Data,
-        #[storage_field]
-        metadata: Data,
-        next_id: u8,
-    }
+/// Balance of an account.
+pub type Balance = u64;
 
-    //impl PSP34 for XcRegions {}
+/// The type used for versioning metadata.
+pub type Version = u32;
 
-    impl XcRegions {
-        #[ink(constructor)]
-        pub fn new() -> Self {
-            Default::default()
-        }
-
-        #[ink(message)]
-        pub fn foo(&self) {}
-    }
+#[derive(scale::Encode)]
+pub enum RuntimeCall {
+	// TODO: use proper index based on the underlying runtime.
+	#[codec(index = 17)]
+	Uniques(uniques::UniquesCall),
 }

@@ -1,0 +1,41 @@
+[package]
+name = "extension"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ink = { version = "4.2.1", default-features = false, optional = true }
+
+scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+scale-info = { version = "2.6", default-features = false, features = ["derive"], optional = true }
+
+primitives = { path = "../primitives", default-features = false }
+uniques-extension = { path = "./uniques-extension", default-features = false, features = ["ink"] }
+
+obce = { git = "https://github.com/727-Ventures/obce", default-features = false }
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = ["std"]
+ink = [
+    "obce/ink",
+    "dep:ink",
+]
+std = [
+    "scale-info/std",
+    "scale/std",
+    "obce/std"
+]
+ink-std = [
+    "std",
+    "ink",
+    "ink/std",
+    "obce/ink-std",
+]

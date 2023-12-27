@@ -6,7 +6,7 @@ description = "Cross-chain Regions contracts."
 edition = "2021"
 
 [dependencies]
-ink = { version = "4.2.1", default-features = false }
+ink = { version = "4.2.1", default-features = false, features = ["call-runtime"]}
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2.6", default-features = false, features = ["derive"], optional = true }
@@ -14,11 +14,16 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 # OpenBrush dependency
 openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = "develop", default-features = false, features=["psp34"] }
 
+environment = { path = "../../environment", default-features = false, features = ["ink"] }
+uniques-extension = { path = "../../extension/uniques-extension", default-features = false, features = ["ink"]}
+primitives = { path = "../../primitives", default-features = false  }
+
 [dev-dependencies]
 ink_e2e = "4.2.1"
+obce = { git = "https://github.com/727-Ventures/obce", default-features = false, features = ["ink-std"] }
 
 [lib]
-path = "lib.rs"
+path = "src/lib.rs"
 
 [features]
 default = ["std"]
@@ -27,6 +32,9 @@ std = [
     "scale/std",
     "scale-info/std",
     "openbrush/std",
+    "environment/ink-std",
+    "uniques-extension/ink-std",
+    "primitives/std",
 ]
 ink-as-dependency = []
 e2e-tests = []

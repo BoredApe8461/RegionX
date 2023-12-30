@@ -25,9 +25,8 @@ pub type Balance = u64;
 /// The type used for versioning metadata.
 pub type Version = u32;
 
-#[derive(scale::Encode)]
+#[derive(scale::Encode, scale::Decode)]
 pub enum RuntimeCall {
-	// TODO: use proper index based on the underlying runtime.
-	#[codec(index = 17)]
+	#[codec(index = 37)]
 	Uniques(uniques::UniquesCall),
 }

@@ -139,7 +139,7 @@ pub mod xc_regions {
 					.call_runtime(&RuntimeCall::Uniques(UniquesCall::ApproveTransfer {
 						collection: REGIONS_COLLECTION_ID,
 						item: region_id,
-						delegate: operator,
+						delegate: operator.into(),
 					}))
 					.map_err(|_| PSP34Error::Custom(XcRegionsError::RuntimeError.to_string()))
 			} else {
@@ -148,7 +148,7 @@ pub mod xc_regions {
 					.call_runtime(&RuntimeCall::Uniques(UniquesCall::CancelApproval {
 						collection: REGIONS_COLLECTION_ID,
 						item: region_id,
-						maybe_check_delegate: Some(operator),
+						maybe_check_delegate: Some(operator.into()),
 					}))
 					.map_err(|_| PSP34Error::Custom(XcRegionsError::RuntimeError.to_string()))
 			}
@@ -164,7 +164,7 @@ pub mod xc_regions {
 				.call_runtime(&RuntimeCall::Uniques(UniquesCall::Transfer {
 					collection: REGIONS_COLLECTION_ID,
 					item: id,
-					dest: to,
+					dest: to.into(),
 				}))
 				.map_err(|_| PSP34Error::Custom(XcRegionsError::RuntimeError.to_string()))
 		}

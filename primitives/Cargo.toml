@@ -16,6 +16,15 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 
 openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = "develop", default-features = false }
 
+# Substrate
+#
+# We need to explicitly turn off some of the `sp-io` features, to avoid conflicts
+# (especially for global allocator).
+#
+# See also: https://substrate.stackexchange.com/questions/4733/error-when-compiling-a-contract-using-the-xcm-chain-extension.
+sp-io = { version = "23.0.0", default-features = false, features = ["disable_panic_handler", "disable_oom", "disable_allocator"] }
+sp-runtime = { version = "24.0.0", default-features = false }
+
 [lib]
 path = "src/lib.rs"
 
@@ -26,4 +35,6 @@ std = [
     "scale/std",
     "scale-info/std",
     "openbrush/std",
+    "sp-runtime/std",
+    "sp-io/std",
 ]

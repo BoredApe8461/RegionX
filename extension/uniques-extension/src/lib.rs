@@ -29,30 +29,53 @@ use scale::{Decode, Encode};
 /// through `call_runtime`, which is more future-proof approach.
 ///
 /// Once WASM view functions are supported, there will no longer be a need for a chain extension.
-#[obce::definition(id = 4)]
 pub trait UniquesExtension {
 	/// The owner of the specific item.
 	fn owner(
 		&self,
 		collection_id: CollectionId,
 		item_id: RawRegionId,
-	) -> Result<Option<AccountId>, UniquesError>;
+	) -> Result<Option<AccountId>, UniquesError> {
+		::ink::env::chain_extension::ChainExtensionMethod::build(0x40001)
+			.input::<(CollectionId, RawRegionId)>()
+			.output::<Result<Option<AccountId>, UniquesError>, true>()
+			.handle_error_code::<UniquesError>()
+			.call(&(collection_id, item_id))
+	}
 
 	/// All items owned by `who`.
-	fn owned(&self, who: AccountId) -> Result<Vec<(CollectionId, RawRegionId)>, UniquesError>;
+	fn owned(&self, who: AccountId) -> Result<Vec<(CollectionId, RawRegionId)>, UniquesError> {
+		::ink::env::chain_extension::ChainExtensionMethod::build(0x4000a)
+			.input::<AccountId>()
+			.output::<Result<Vec<(CollectionId, RawRegionId)>, UniquesError>, true>()
+			.handle_error_code::<UniquesError>()
+			.call(&who)
+	}
 
 	/// Returns the details of a collection.
 	fn collection(
 		&self,
 		collection_id: CollectionId,
-	) -> Result<Option<CollectionDetails>, UniquesError>;
+	) -> Result<Option<CollectionDetails>, UniquesError> {
+		::ink::env::chain_extension::ChainExtensionMethod::build(0x40006)
+			.input::<CollectionId>()
+			.output::<Result<Option<CollectionDetails>, UniquesError>, true>()
+			.handle_error_code::<UniquesError>()
+			.call(&collection_id)
+	}
 
 	/// Returns the details of an item within a collection.
 	fn item(
 		&self,
 		collection_id: CollectionId,
 		item_id: RawRegionId,
-	) -> Result<Option<ItemDetails>, UniquesError>;
+	) -> Result<Option<ItemDetails>, UniquesError> {
+		::ink::env::chain_extension::ChainExtensionMethod::build(0x40007)
+			.input::<(CollectionId, RawRegionId)>()
+			.output::<Result<Option<ItemDetails>, UniquesError>, true>()
+			.handle_error_code::<UniquesError>()
+			.call(&(collection_id, item_id))
+	}
 }
 
 #[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, Debug)]

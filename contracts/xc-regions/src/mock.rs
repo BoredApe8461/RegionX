@@ -28,7 +28,6 @@ use uniques_extension::{UniquesError, UniquesExtension};
 #[derive(Default, Debug)]
 pub struct MockExtension;
 
-#[obce::mock]
 impl UniquesExtension for MockExtension {
 	/// The owner of the specific item.
 	fn owner(

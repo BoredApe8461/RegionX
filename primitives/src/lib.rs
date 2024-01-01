@@ -27,6 +27,7 @@ pub type Version = u32;
 
 #[derive(scale::Encode, scale::Decode)]
 pub enum RuntimeCall {
-	#[codec(index = 37)]
+	// NOTE: on shibuya this is 37. in local-runtime this is 30.
+	#[codec(index = 30)]
 	Uniques(uniques::UniquesCall),
 }

@@ -14,21 +14,20 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	mock::{get_default_accounts, region_id},
 	traits::RegionMetadata,
 	types::{VersionedRegion, XcRegionsError},
 	xc_regions::{RegionInitialized, RegionRemoved, XcRegions},
 	REGIONS_COLLECTION_ID,
 };
 use ink::env::{
-	test::{set_caller, DefaultAccounts},
+	test::{default_accounts, set_caller, DefaultAccounts},
 	DefaultEnvironment,
 };
 use openbrush::contracts::psp34::{Id, PSP34};
 use primitives::{
 	assert_ok,
 	coretime::{RawRegionId, Region},
-	uniques::ItemDetails,
+	uniques::{CollectionId, ItemDetails},
 	Version,
 };
 
@@ -36,93 +35,78 @@ type Event = <XcRegions as ::ink::reflect::ContractEventBase>::Type;
 
 #[ink::test]
 fn mock_environment_helper_functions_work() {
-	let DefaultAccounts::<DefaultEnvironment> { alice, .. } = get_default_accounts();
+	let DefaultAccounts::<DefaultEnvironment> { charlie, .. } = get_default_accounts();
 	let mut xc_regions = XcRegions::new();
 
 	let region_id_0 = region_id(0);
 
 	// State should be empty since we haven't yet minted any regions.
 	assert!(xc_regions.items.get(region_id_0).is_none());
-	assert!(xc_regions.account.get(alice).is_none());
+	assert!(xc_regions.account.get(charlie).is_none());
 
 	// 1. Ensure mint works:
-	assert_ok!(xc_regions.mint(region_id_0, alice));
+	assert_ok!(xc_regions.mint(region_id_0, charlie));
 
 	// Can't mint the same region twice:
-	assert!(xc_regions.mint(region_id_0, alice).is_err());
+	assert!(xc_regions.mint(region_id_0, charlie).is_err());
 
 	assert_eq!(
 		xc_regions.items.get(region_id_0),
 		Some(ItemDetails {
-			owner: alice,
+			owner: charlie,
 			approved: None,
 			is_frozen: false,
 			deposit: Default::default()
 		})
 	);
-	assert_eq!(xc_regions.account.get(alice), Some(vec![region_id_0]));
+	assert_eq!(xc_regions.account.get(charlie), Some(vec![region_id_0]));
 
 	// 2. Ensure burn works:
 
 	// Mint one more new region:
 	let region_id_1 = region_id(1);
-	assert_ok!(xc_regions.mint(region_id_1, alice));
+	assert_ok!(xc_regions.mint(region_id_1, charlie));
 
 	assert_ok!(xc_regions.burn(region_id_0));
 	assert!(xc_regions.items.get(region_id_0).is_none());
-	assert_eq!(xc_regions.account.get(alice), Some(vec![region_id_1]));
+	assert_eq!(xc_regions.account.get(charlie), Some(vec![region_id_1]));
 
 	assert_ok!(xc_regions.burn(region_id_1));
 	assert!(xc_regions.items.get(region_id_1).is_none());
-	assert!(xc_regions.account.get(alice).is_none());
+	assert!(xc_regions.account.get(charlie).is_none());
 
 	assert!(xc_regions.burn(region_id_1).is_err());
 }
 
 #[ink::test]
-fn psp34_implementation_works() {
-	let DefaultAccounts::<DefaultEnvironment> { alice, bob, .. } = get_default_accounts();
-	let mut xc_regions = XcRegions::new();
-
-	// Initialize some state:
-	assert_ok!(xc_regions.mint(region_id(0), alice));
-	assert_ok!(xc_regions.mint(region_id(1), bob));
-
-	// 1. Ensure `collection_id` works:
-	assert_eq!(xc_regions.collection_id(), Id::U32(REGIONS_COLLECTION_ID));
-
-	// 2. Ensure `owner_of` works:
-	assert_eq!(xc_regions.owner_of(Id::U128(0)), Some(alice));
-	assert_eq!(xc_regions.owner_of(Id::U128(1)), Some(bob));
-	assert_eq!(xc_regions.owner_of(Id::U128(3)), None);
-
-	// 3. Ensure `balance_of` works:
-	assert_eq!(xc_regions.balance_of(alice), 1);
-	assert_ok!(xc_regions.burn(region_id(1)));
-	assert_eq!(xc_regions.balance_of(bob), 0);
-}
-
-#[ink::test]
 fn init_works() {
-	let DefaultAccounts::<DefaultEnvironment> { alice, bob, .. } = get_default_accounts();
+	let DefaultAccounts::<DefaultEnvironment> { charlie, bob, .. } = get_default_accounts();
 	let mut xc_regions = XcRegions::new();
+	let contract = ink::env::account_id::<ink::env::DefaultEnvironment>();
 
 	// 1. Cannot initialize a region that doesn't exist:
 	assert_eq!(xc_regions.init(0, Region::default()), Err(XcRegionsError::CannotInitialize));
 
 	// 2. Cannot initialize a region that is not owned by the caller
-	assert_ok!(xc_regions.mint(region_id(0), alice));
+	assert_ok!(xc_regions.mint(region_id(0), charlie));
 
 	set_caller::<DefaultEnvironment>(bob);
 	assert_eq!(xc_regions.init(0, Region::default()), Err(XcRegionsError::CannotInitialize));
 
-	set_caller::<DefaultEnvironment>(alice);
+	set_caller::<DefaultEnvironment>(charlie);
 	// 3. Initialization doesn't work with incorrect metadata:
 	let invalid_metadata = Region { begin: 1, end: 2, core: 0, mask: Default::default() };
 	assert_eq!(xc_regions.init(0, invalid_metadata), Err(XcRegionsError::InvalidMetadata));
 
 	// 4. Initialization works with correct metadata and the right caller:
 	assert_ok!(xc_regions.init(0, Region::default()));
+
+	// The region gets transferred to the contract:
+	assert_eq!(xc_regions._uniques_owner(0), Some(contract));
+
+	// Charlie receives a wrapped region:
+	assert_eq!(xc_regions.owner_of(Id::U128(0)), Some(charlie));
+	assert_eq!(xc_regions.balance_of(charlie), 1);
 
 	assert_eq!(xc_regions.regions.get(0), Some(Region::default()));
 	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
@@ -136,95 +120,85 @@ fn init_works() {
 
 #[ink::test]
 fn remove_works() {
-	let DefaultAccounts::<DefaultEnvironment> { alice, bob, .. } = get_default_accounts();
+	let DefaultAccounts::<DefaultEnvironment> { charlie, .. } = get_default_accounts();
 	let mut xc_regions = XcRegions::new();
+	set_caller::<DefaultEnvironment>(charlie);
 
-	// We first mint and initialize a region.
-	assert_ok!(xc_regions.mint(region_id(0), alice));
-	assert_ok!(xc_regions.init(0, Region::default()));
+	let contract = ink::env::account_id::<ink::env::DefaultEnvironment>();
 
-	assert_eq!(xc_regions.regions.get(0), Some(Region::default()));
-	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
-
-	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
-	assert_init_event(&emitted_events.last().unwrap(), 0, Region::default(), 0);
-
-	// Cannot remove a region that exists.
+	// Cannot remove a region that doesn't exist.
 	assert_eq!(xc_regions.remove(0), Err(XcRegionsError::CannotRemove));
 
-	assert_ok!(xc_regions.burn(region_id(0)));
-
-	// Anyone has the right to remove a region that no longer exists on this chain.
-	set_caller::<DefaultEnvironment>(bob);
-	assert_ok!(xc_regions.remove(0));
-
-	assert_eq!(xc_regions.regions.get(0), None);
-	// The metadata version is still stored in the contract.
-	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
-
-	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
-	assert_removed_event(&emitted_events.last().unwrap(), 0);
-}
-
-#[ink::test]
-fn metadata_version_gets_updated() {
-	let DefaultAccounts::<DefaultEnvironment> { alice, .. } = get_default_accounts();
-	let mut xc_regions = XcRegions::new();
-
-	// We first mint and initialize a region.
-	assert_ok!(xc_regions.mint(region_id(0), alice));
+	// Minting and initializing a region:
+	assert_ok!(xc_regions.mint(region_id(0), charlie));
 	assert_ok!(xc_regions.init(0, Region::default()));
+
+	// The region gets transferred to the contract:
+	assert_eq!(xc_regions._uniques_owner(0), Some(contract));
+
+	// Charlie receives a wrapped region:
+	assert_eq!(xc_regions.owner_of(Id::U128(0)), Some(charlie));
+	assert_eq!(xc_regions.balance_of(charlie), 1);
 
 	assert_eq!(xc_regions.regions.get(0), Some(Region::default()));
 	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
 
-	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
-	assert_init_event(&emitted_events.last().unwrap(), 0, Region::default(), 0);
-
-	// In reality, updating metadata would require the asset to be destroyed, transferred
-	// back to the reserve chain via a cross-chain transfer, then sent back and re-initialized with
-	// the `init` call.
-
-	// In this test we simulate this by burning and minting the asset back again.
-
-	// Remove the region:
-	assert_ok!(xc_regions.burn(region_id(0)));
+	// Removing a region works:
 	assert_ok!(xc_regions.remove(0));
 
+	// The region gets transferred back to Charlie and the wrapped region gets burned.
+	assert_eq!(xc_regions._uniques_owner(0), Some(charlie));
+	assert_eq!(xc_regions.owner_of(Id::U128(0)), None);
+	assert_eq!(xc_regions.balance_of(charlie), 0);
+
+	// The metadata should to be removed, however the metadata version should be retained in the
+	// contract for this region.
 	assert_eq!(xc_regions.regions.get(0), None);
 	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
 
 	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
 	assert_removed_event(&emitted_events.last().unwrap(), 0);
-
-	// Mint and initialize the region again:
-	assert_ok!(xc_regions.mint(region_id(0), alice));
-	assert_ok!(xc_regions.init(0, Region::default()));
-
-	assert_eq!(xc_regions.regions.get(0), Some(Region::default()));
-	// The metadata version must be incremented to indicate the change:
-	assert_eq!(xc_regions.metadata_versions.get(0), Some(1));
-
-	let emitted_events = ink::env::test::recorded_events().collect::<Vec<_>>();
-	assert_init_event(&emitted_events.last().unwrap(), 0, Region::default(), 1);
 }
 
 #[ink::test]
 fn get_metadata_works() {
-	let DefaultAccounts::<DefaultEnvironment> { alice, .. } = get_default_accounts();
+	let DefaultAccounts::<DefaultEnvironment> { charlie, .. } = get_default_accounts();
 	let mut xc_regions = XcRegions::new();
+	set_caller::<DefaultEnvironment>(charlie);
 
 	// Cannot get the metadata of a region that doesn't exist:
-	assert_eq!(xc_regions.get_metadata(0), Err(XcRegionsError::RegionNotFound));
+	assert_eq!(xc_regions.get_metadata(0), Err(XcRegionsError::MetadataNotFound));
 
 	// Minting a region without initializing it.
-	assert_ok!(xc_regions.mint(region_id(0), alice));
+	assert_ok!(xc_regions.mint(region_id(0), charlie));
 	assert_eq!(xc_regions.get_metadata(0), Err(XcRegionsError::MetadataNotFound));
 
 	assert_ok!(xc_regions.init(0, Region::default()));
 	assert_eq!(
 		xc_regions.get_metadata(0),
 		Ok(VersionedRegion { version: 0, region: Region::default() })
+	);
+}
+
+#[ink::test]
+fn metadata_version_gets_updated() {
+	let DefaultAccounts::<DefaultEnvironment> { charlie, .. } = get_default_accounts();
+	let mut xc_regions = XcRegions::new();
+	set_caller::<DefaultEnvironment>(charlie);
+
+	assert_ok!(xc_regions.mint(region_id(0), charlie));
+	assert_ok!(xc_regions.init(0, Region::default()));
+	assert_eq!(
+		xc_regions.get_metadata(0),
+		Ok(VersionedRegion { version: 0, region: Region::default() })
+	);
+
+	assert_ok!(xc_regions.remove(0));
+
+	assert_ok!(xc_regions.init(0, Region::default()));
+	assert_eq!(
+		xc_regions.get_metadata(0),
+		Ok(VersionedRegion { version: 1, region: Region::default() })
 	);
 }
 
@@ -259,4 +233,12 @@ fn assert_removed_event(event: &ink::env::test::EmittedEvent, expected_region_id
 	} else {
 		panic!("encountered unexpected event kind: expected a RegionRemoved event")
 	}
+}
+
+pub fn region_id(region_id: RawRegionId) -> (CollectionId, RawRegionId) {
+	(REGIONS_COLLECTION_ID, region_id)
+}
+
+pub fn get_default_accounts() -> DefaultAccounts<DefaultEnvironment> {
+	default_accounts::<DefaultEnvironment>()
 }

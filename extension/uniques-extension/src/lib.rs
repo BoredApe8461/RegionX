@@ -14,7 +14,6 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use ink::prelude::vec::Vec;
 use openbrush::traits::AccountId;
 use primitives::{
 	coretime::RawRegionId,
@@ -41,15 +40,6 @@ pub trait UniquesExtension {
 			.output::<Result<Option<AccountId>, UniquesError>, true>()
 			.handle_error_code::<UniquesError>()
 			.call(&(collection_id, item_id))
-	}
-
-	/// All items owned by `who`.
-	fn owned(&self, who: AccountId) -> Result<Vec<(CollectionId, RawRegionId)>, UniquesError> {
-		::ink::env::chain_extension::ChainExtensionMethod::build(0x4000a)
-			.input::<AccountId>()
-			.output::<Result<Vec<(CollectionId, RawRegionId)>, UniquesError>, true>()
-			.handle_error_code::<UniquesError>()
-			.call(&who)
 	}
 
 	/// Returns the details of a collection.

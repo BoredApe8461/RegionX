@@ -20,13 +20,12 @@ mod traits;
 mod types;
 
 #[cfg(test)]
-mod mock;
-#[cfg(test)]
 mod tests;
 
 // NOTE: This should be the collection ID of the underlying region collection.
 const REGIONS_COLLECTION_ID: u32 = 42;
 
+#[openbrush::implementation(PSP34)]
 #[openbrush::contract(env = environment::ExtendedEnvironment)]
 pub mod xc_regions {
 	use crate::{
@@ -36,32 +35,38 @@ pub mod xc_regions {
 	};
 	use ink::{
 		codegen::{EmitEvent, Env},
-		prelude::{string::ToString, vec::Vec},
 		storage::Mapping,
 	};
-	use openbrush::{contracts::psp34::extensions::metadata::*, traits::Storage};
+	use openbrush::traits::Storage;
 	use primitives::{
 		coretime::{RawRegionId, Region, RegionId},
 		ensure,
-		uniques::{CollectionId, ItemDetails, UniquesCall},
+		uniques::{ItemDetails, UniquesCall},
 		RuntimeCall, Version,
 	};
 	use uniques_extension::UniquesExtension;
 
+	#[cfg(test)]
+	use primitives::uniques::CollectionId;
+
 	#[ink(storage)]
 	#[derive(Default, Storage)]
 	pub struct XcRegions {
+		#[storage_field]
+		psp34: psp34::Data,
+		/// A mapping that links RawRegionId to its corresponding region metadata.
 		pub regions: Mapping<RawRegionId, Region>,
+		/// A mapping that keeps track of the metadata version for each region.
+		///
+		/// This version gets incremented for a region each time it gets re-initialized.
 		pub metadata_versions: Mapping<RawRegionId, Version>,
-		// Mock state only used for testing. In production the contract is reading the state from
-		// the chain extension.
+		// Mock chain extension state only used for integration testing.
 		#[cfg(test)]
 		pub items: Mapping<
 			(primitives::uniques::CollectionId, primitives::coretime::RawRegionId),
 			ItemDetails,
 		>,
-		// Mock state only used for testing. In production the contract is reading the state from
-		// the chain extension.
+		// Mock chain extension state only used for integration testing.
 		#[cfg(test)]
 		pub account: Mapping<
 			AccountId,
@@ -88,100 +93,15 @@ pub mod xc_regions {
 		pub(crate) region_id: RawRegionId,
 	}
 
-	impl PSP34 for XcRegions {
-		#[ink(message)]
-		fn collection_id(&self) -> Id {
-			Id::U32(REGIONS_COLLECTION_ID)
-		}
-
-		#[ink(message)]
-		fn balance_of(&self, who: AccountId) -> u32 {
-			self.owned(who).len() as u32
-		}
-
-		#[ink(message)]
-		fn owner_of(&self, id: Id) -> Option<AccountId> {
-			// We expect the region id to be a `u128`.
-			if let Id::U128(region_id) = id {
-				self.owner(region_id)
-			} else {
-				None
-			}
-		}
-
-		#[ink(message)]
-		fn allowance(&self, owner: AccountId, operator: AccountId, id: Option<Id>) -> bool {
-			// We expect the region id to be a `u128`.
-			let Some(Id::U128(region_id)) = id else { return false };
-
-			if let Some(item_details) = self.item(region_id) {
-				item_details.owner == owner && item_details.approved == Some(operator)
-			} else {
-				false
-			}
-		}
-
-		#[ink(message)]
-		fn approve(
-			&mut self,
-			operator: AccountId,
-			id: Option<Id>,
-			approved: bool,
-		) -> Result<(), PSP34Error> {
-			// We expect the region id to be a `u128`.
-			let Some(Id::U128(region_id)) = id else {
-				return Err(PSP34Error::Custom(XcRegionsError::InvalidRegionId.to_string()))
-			};
-
-			if approved {
-				// Approve:
-				self.env()
-					.call_runtime(&RuntimeCall::Uniques(UniquesCall::ApproveTransfer {
-						collection: REGIONS_COLLECTION_ID,
-						item: region_id,
-						delegate: operator.into(),
-					}))
-					.map_err(|_| PSP34Error::Custom(XcRegionsError::RuntimeError.to_string()))
-			} else {
-				// Cancel approval:
-				self.env()
-					.call_runtime(&RuntimeCall::Uniques(UniquesCall::CancelApproval {
-						collection: REGIONS_COLLECTION_ID,
-						item: region_id,
-						maybe_check_delegate: Some(operator.into()),
-					}))
-					.map_err(|_| PSP34Error::Custom(XcRegionsError::RuntimeError.to_string()))
-			}
-		}
-
-		#[ink(message)]
-		fn transfer(&mut self, to: AccountId, id: Id, _data: Vec<u8>) -> Result<(), PSP34Error> {
-			let Id::U128(id) = id else {
-				return Err(PSP34Error::Custom(XcRegionsError::InvalidRegionId.to_string()))
-			};
-
-			self.env()
-				.call_runtime(&RuntimeCall::Uniques(UniquesCall::Transfer {
-					collection: REGIONS_COLLECTION_ID,
-					item: id,
-					dest: to.into(),
-				}))
-				.map_err(|_| PSP34Error::Custom(XcRegionsError::RuntimeError.to_string()))
-		}
-
-		#[ink(message)]
-		fn total_supply(&self) -> Balance {
-			if let Ok(Some(collection)) = self.env().extension().collection(REGIONS_COLLECTION_ID) {
-				collection.items.into()
-			} else {
-				Default::default()
-			}
-		}
+	#[overrider(PSP34)]
+	fn collection_id(&self) -> Id {
+		Id::U32(REGIONS_COLLECTION_ID)
 	}
 
 	impl RegionMetadata for XcRegions {
-		/// A function for initializing the metadata of a region. It can only be called if the
-		/// specified region exists on this chain and the caller is the actual owner of the region.
+		/// A function for minting a wrapped xcRegion and initializing the metadata of it. It can
+		/// only be called if the specified region exists on this chain and the caller is the actual
+		/// owner of the region.
 		///
 		/// ## Arguments:
 		/// - `raw_region_id` - The `u128` encoded region identifier.
@@ -194,6 +114,12 @@ pub mod xc_regions {
 		/// If this is not the first time that this region is inititalized, the metadata version
 		/// will get incremented.
 		///
+		/// The underlying region will be transferred to this contract, and in response, a wrapped
+		/// token will be minted for the caller.
+		///
+		/// NOTE: Prior to invoking this ink message, the caller must grant approval to the contract
+		/// for the region, enabling its transfer.
+		///
 		/// ## Events:
 		/// On success this ink message emits the `RegionInitialized` event.
 		#[ink(message)]
@@ -202,8 +128,9 @@ pub mod xc_regions {
 			raw_region_id: RawRegionId,
 			region: Region,
 		) -> Result<(), XcRegionsError> {
+			let caller = self.env().caller();
 			ensure!(
-				Some(self.env().caller()) == self.owner_of(Id::U128(raw_region_id)),
+				Some(caller) == self._uniques_owner(raw_region_id),
 				XcRegionsError::CannotInitialize
 			);
 
@@ -217,6 +144,11 @@ pub mod xc_regions {
 			ensure!(region_id.core == region.core, XcRegionsError::InvalidMetadata);
 			ensure!(region_id.mask == region.mask, XcRegionsError::InvalidMetadata);
 
+			// After passing all checks we will transfer the region to the contract and mint a
+			// wrapped xcRegion token.
+			let contract = self.env().account_id();
+			self._transfer(raw_region_id, contract)?;
+
 			let new_version = if let Some(version) = self.metadata_versions.get(raw_region_id) {
 				version.saturating_add(1)
 			} else {
@@ -225,6 +157,9 @@ pub mod xc_regions {
 
 			self.metadata_versions.insert(raw_region_id, &new_version);
 			self.regions.insert(raw_region_id, &region);
+
+			psp34::InternalImpl::_mint_to(self, caller, Id::U128(raw_region_id))
+				.map_err(XcRegionsError::Psp34)?;
 
 			self.env().emit_event(RegionInitialized {
 				region_id: raw_region_id,
@@ -235,8 +170,7 @@ pub mod xc_regions {
 			Ok(())
 		}
 
-		/// A function to retrieve all metadata associated with a specific region. This function
-		/// verifies the region's existence on this chain prior to fetching its metadata.
+		/// A function to retrieve all metadata associated with a specific region.
 		///
 		/// The function returns a `VersionedRegion`, encompassing the version of the retrieved
 		/// metadata that is intended for client-side verification.
@@ -245,13 +179,10 @@ pub mod xc_regions {
 		/// - `raw_region_id` - The `u128` encoded region identifier.
 		#[ink(message)]
 		fn get_metadata(&self, region_id: RawRegionId) -> Result<VersionedRegion, XcRegionsError> {
-			// We must first ensure that the region is still present on this chain before retrieving
-			// the metadata.
-			ensure!(self.exists(region_id), XcRegionsError::RegionNotFound);
-
 			let Some(region) = self.regions.get(region_id) else {
 				return Err(XcRegionsError::MetadataNotFound)
 			};
+
 			let Some(version) = self.metadata_versions.get(region_id) else {
 				// This should never really happen; if a region has its metadata stored, its version
 				// should be stored as well.
@@ -261,10 +192,12 @@ pub mod xc_regions {
 			Ok(VersionedRegion { version, region })
 		}
 
-		/// A function for removing the metadata associated with a region.
+		/// A function to return the region to its owner.
 		///
-		/// This function is callable by anyone, and the metadata is removed successfully if the
-		/// specific region no longer exists on this chain.
+		/// This process involves burning the wrapped region and eliminating its associated
+		/// metadata.
+		///
+		///Only the owner of the wrapped region can call this function.
 		///
 		/// ## Arguments:
 		/// - `raw_region_id` - The `u128` encoded region identifier.
@@ -273,10 +206,14 @@ pub mod xc_regions {
 		/// On success this ink message emits the `RegionRemoved` event.
 		#[ink(message)]
 		fn remove(&mut self, region_id: RawRegionId) -> Result<(), XcRegionsError> {
-			// We only allow the removal of regions that no longer exist in the underlying nft
-			// pallet.
-			ensure!(!self.exists(region_id), XcRegionsError::CannotRemove);
+			let id = Id::U128(region_id);
+			let owner =
+				psp34::PSP34Impl::owner_of(self, id.clone()).ok_or(XcRegionsError::CannotRemove)?;
+
 			self.regions.remove(region_id);
+
+			psp34::InternalImpl::_burn_from(self, owner, id).map_err(XcRegionsError::Psp34)?;
+			self._transfer(region_id, owner)?;
 
 			self.env().emit_event(RegionRemoved { region_id });
 			Ok(())
@@ -290,55 +227,65 @@ pub mod xc_regions {
 		}
 	}
 
+	// Internal functions:
+	#[cfg(not(test))]
 	impl XcRegions {
+		fn _transfer(&self, region_id: RawRegionId, dest: AccountId) -> Result<(), XcRegionsError> {
+			self.env()
+				.call_runtime(&RuntimeCall::Uniques(UniquesCall::Transfer {
+					collection: REGIONS_COLLECTION_ID,
+					item: region_id,
+					dest: dest.into(),
+				}))
+				.map_err(|_| XcRegionsError::RuntimeError)?;
+
+			Ok(())
+		}
+
 		/// Returns whether the region exists on this chain or not.
-		fn exists(&self, region_id: RawRegionId) -> bool {
-			self.item(region_id).is_some()
+		fn _uniques_exists(&self, region_id: RawRegionId) -> bool {
+			self._uniques_item(region_id).is_some()
 		}
 
 		/// Returns the details of an item within a collection.
-		fn item(&self, item_id: RawRegionId) -> Option<ItemDetails> {
-			#[cfg(not(test))]
-			{
-				self.env().extension().item(REGIONS_COLLECTION_ID, item_id).ok()?
-			}
-			// When testing we use mock state.
-			#[cfg(test)]
-			{
-				self.items.get((REGIONS_COLLECTION_ID, item_id))
-			}
+		fn _uniques_item(&self, item_id: RawRegionId) -> Option<ItemDetails> {
+			self.env().extension().item(REGIONS_COLLECTION_ID, item_id).ok()?
 		}
 
 		/// The owner of the specific item.
-		fn owner(&self, region_id: RawRegionId) -> Option<AccountId> {
-			#[cfg(not(test))]
-			{
-				self.env().extension().owner(REGIONS_COLLECTION_ID, region_id).ok()?
-			}
-			// When testing we use mock state.
-			#[cfg(test)]
-			{
-				self.items.get((REGIONS_COLLECTION_ID, region_id)).map(|a| a.owner)
-			}
-		}
-
-		/// All items owned by `who`.
-		fn owned(&self, who: AccountId) -> Vec<(CollectionId, RawRegionId)> {
-			#[cfg(not(test))]
-			{
-				self.env().extension().owned(who).unwrap_or_default()
-			}
-			// When testing we use mock state.
-			#[cfg(test)]
-			{
-				self.account.get(who).map(|a| a).unwrap_or_default()
-			}
+		fn _uniques_owner(&self, region_id: RawRegionId) -> Option<AccountId> {
+			self.env().extension().owner(REGIONS_COLLECTION_ID, region_id).ok()?
 		}
 	}
 
-	// Helper functions for modifying the mock state.
+	// Implelementation of internal functions used only for integration tests.
 	#[cfg(test)]
 	impl XcRegions {
+		fn _transfer(
+			&mut self,
+			region_id: RawRegionId,
+			dest: AccountId,
+		) -> Result<(), XcRegionsError> {
+			self.burn((REGIONS_COLLECTION_ID, region_id)).unwrap();
+			self.mint((REGIONS_COLLECTION_ID, region_id), dest).unwrap();
+			Ok(())
+		}
+
+		/// Returns whether the region exists on this chain or not.
+		pub fn _uniques_exists(&self, region_id: RawRegionId) -> bool {
+			self._uniques_item(region_id).is_some()
+		}
+
+		/// Returns the details of an item within a collection.
+		pub fn _uniques_item(&self, item_id: RawRegionId) -> Option<ItemDetails> {
+			self.items.get((REGIONS_COLLECTION_ID, item_id))
+		}
+
+		/// The owner of the specific item.
+		pub fn _uniques_owner(&self, region_id: RawRegionId) -> Option<AccountId> {
+			self.items.get((REGIONS_COLLECTION_ID, region_id)).map(|a| a.owner)
+		}
+
 		pub fn mint(
 			&mut self,
 			id: (CollectionId, RawRegionId),
@@ -384,33 +331,210 @@ pub mod xc_regions {
 
 	#[cfg(all(test, feature = "e2e-tests"))]
 	pub mod tests {
+		use super::*;
 		use crate::{
-			mock::{region_id, register_chain_extensions, MockExtension},
-			xc_regions::XcRegionsRef,
+			traits::regionmetadata_external::RegionMetadata, types::VersionedRegion,
+			REGIONS_COLLECTION_ID,
 		};
-		use ink::env::{test::DefaultAccounts, DefaultEnvironment};
-		use ink_e2e::build_message;
+		use environment::ExtendedEnvironment;
+		use ink_e2e::{subxt::dynamic::Value, MessageBuilder};
 		use openbrush::contracts::psp34::psp34_external::PSP34;
-		use primitives::{address_of, assert_ok};
+		use primitives::address_of;
 
 		type E2EResult<T> = Result<T, Box<dyn std::error::Error>>;
 
-		#[ink_e2e::test]
-		async fn test_1(
-			mut client: ink_e2e::Client<C, environment::ExtendedEnvironment>,
+		#[ink_e2e::test(environment = ExtendedEnvironment)]
+		async fn init_non_existing_region_fails(
+			mut client: ink_e2e::Client<C, E>,
 		) -> E2EResult<()> {
-			let mut mock = MockExtension::default();
-			register_chain_extensions(mock);
-
 			let constructor = XcRegionsRef::new();
-
-			/* Related issue: https://substrate.stackexchange.com/questions/10675/ink-e2e-tests-with-custom-environment
-			let address = client
-				.instantiate("xc_regions", &ink_e2e::alice(), constructor, 0, None)
+			let contract_acc_id = client
+				.instantiate("xc-regions", &ink_e2e::alice(), constructor, 0, None)
 				.await
 				.expect("instantiate failed")
 				.account_id;
-				*/
+
+			let raw_region_id = 0u128;
+			let region = Region::default();
+
+			let init = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
+				contract_acc_id.clone(),
+			)
+			.call(|xc_regions| xc_regions.init(raw_region_id, region.clone()));
+			let init_result = client.call_dry_run(&ink_e2e::alice(), &init, 0, None).await;
+			assert_eq!(init_result.return_value(), Err(XcRegionsError::CannotInitialize));
+
+			Ok(())
+		}
+
+		#[ink_e2e::test(environment = ExtendedEnvironment)]
+		async fn init_works(mut client: E2EBackend) -> E2EResult<()> {
+			let constructor = XcRegionsRef::new();
+			let contract_acc_id = client
+				.instantiate("xc-regions", &ink_e2e::alice(), constructor, 0, None)
+				.await
+				.expect("instantiate failed")
+				.account_id;
+
+			let raw_region_id = 0u128;
+			let region = Region::default();
+
+			// Create region: collection
+			let call_data = vec![
+				Value::u128(REGIONS_COLLECTION_ID.into()),
+				Value::unnamed_variant("Id", [Value::from_bytes(&address_of!(Alice))]),
+			];
+			client
+				.runtime_call(&ink_e2e::alice(), "Uniques", "create", call_data)
+				.await
+				.expect("creating a collection failed");
+
+			// Mint region:
+			let call_data = vec![
+				Value::u128(REGIONS_COLLECTION_ID.into()),
+				Value::u128(raw_region_id.into()),
+				Value::unnamed_variant("Id", [Value::from_bytes(&address_of!(Alice))]),
+			];
+			client
+				.runtime_call(&ink_e2e::alice(), "Uniques", "mint", call_data)
+				.await
+				.expect("minting a region failed");
+
+			// Approve transfer region:
+			let call_data = vec![
+				Value::u128(REGIONS_COLLECTION_ID.into()),
+				Value::u128(raw_region_id.into()),
+				Value::unnamed_variant("Id", [Value::from_bytes(contract_acc_id)]),
+			];
+			client
+				.runtime_call(&ink_e2e::alice(), "Uniques", "approve_transfer", call_data)
+				.await
+				.expect("approving transfer failed");
+
+			let init = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
+				contract_acc_id.clone(),
+			)
+			.call(|xc_regions| xc_regions.init(raw_region_id, region.clone()));
+			let init_result = client.call(&ink_e2e::alice(), init, 0, None).await;
+			assert!(init_result.is_ok(), "Init should work");
+
+			// Ensure the state is properly updated:
+
+			// Alice receives the wrapped region:
+			let balance_of = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
+				contract_acc_id.clone(),
+			)
+			.call(|xc_regions| xc_regions.balance_of(address_of!(Alice)));
+			let balance_of_res = client.call_dry_run(&ink_e2e::alice(), &balance_of, 0, None).await;
+			assert_eq!(balance_of_res.return_value(), 1);
+
+			let owner_of = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
+				contract_acc_id.clone(),
+			)
+			.call(|xc_regions| xc_regions.owner_of(Id::U128(0)));
+			let owner_of_res = client.call_dry_run(&ink_e2e::alice(), &owner_of, 0, None).await;
+			assert_eq!(owner_of_res.return_value(), Some(address_of!(Alice)));
+
+			// The metadata is properly stored:
+			let get_metadata =
+				MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
+					contract_acc_id.clone(),
+				)
+				.call(|xc_regions| xc_regions.get_metadata(raw_region_id));
+			let get_metadata_res =
+				client.call_dry_run(&ink_e2e::alice(), &get_metadata, 0, None).await;
+
+			assert_eq!(get_metadata_res.return_value(), Ok(VersionedRegion { version: 0, region }));
+
+			Ok(())
+		}
+
+		#[ink_e2e::test(environment = ExtendedEnvironment)]
+		async fn remove_works(mut client: E2EBackend) -> E2EResult<()> {
+			let constructor = XcRegionsRef::new();
+			let contract_acc_id = client
+				.instantiate("xc-regions", &ink_e2e::alice(), constructor, 0, None)
+				.await
+				.expect("instantiate failed")
+				.account_id;
+
+			let raw_region_id = 0u128;
+			let region = Region::default();
+
+			// Create region: collection
+			let call_data = vec![
+				Value::u128(REGIONS_COLLECTION_ID.into()),
+				Value::unnamed_variant("Id", [Value::from_bytes(&address_of!(Alice))]),
+			];
+			client
+				.runtime_call(&ink_e2e::alice(), "Uniques", "create", call_data)
+				.await
+				.expect("creating a collection failed");
+
+			// Mint region:
+			let call_data = vec![
+				Value::u128(REGIONS_COLLECTION_ID.into()),
+				Value::u128(raw_region_id.into()),
+				Value::unnamed_variant("Id", [Value::from_bytes(&address_of!(Alice))]),
+			];
+			client
+				.runtime_call(&ink_e2e::alice(), "Uniques", "mint", call_data)
+				.await
+				.expect("minting a region failed");
+
+			// Approve transfer region:
+			let call_data = vec![
+				Value::u128(REGIONS_COLLECTION_ID.into()),
+				Value::u128(raw_region_id.into()),
+				Value::unnamed_variant("Id", [Value::from_bytes(contract_acc_id)]),
+			];
+			client
+				.runtime_call(&ink_e2e::alice(), "Uniques", "approve_transfer", call_data)
+				.await
+				.expect("approving transfer failed");
+
+			let init = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
+				contract_acc_id.clone(),
+			)
+			.call(|xc_regions| xc_regions.init(raw_region_id, region.clone()));
+			let init_result = client.call(&ink_e2e::alice(), init, 0, None).await;
+			assert!(init_result.is_ok(), "Init should succeed");
+
+			let remove = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
+				contract_acc_id.clone(),
+			)
+			.call(|xc_regions| xc_regions.remove(raw_region_id));
+
+			let remove_result = client.call(&ink_e2e::alice(), remove, 0, None).await;
+			assert!(remove_result.is_ok(), "Remove should work");
+
+			// Ensure the state is properly updated:
+
+			// Alice no longer holds the wrapped region:
+			let balance_of = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
+				contract_acc_id.clone(),
+			)
+			.call(|xc_regions| xc_regions.balance_of(address_of!(Alice)));
+			let balance_of_res = client.call_dry_run(&ink_e2e::alice(), &balance_of, 0, None).await;
+			assert_eq!(balance_of_res.return_value(), 0);
+
+			let owner_of = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
+				contract_acc_id.clone(),
+			)
+			.call(|xc_regions| xc_regions.owner_of(Id::U128(0)));
+			let owner_of_res = client.call_dry_run(&ink_e2e::alice(), &owner_of, 0, None).await;
+			assert_eq!(owner_of_res.return_value(), None);
+
+			// The metadata should be removed:
+			let get_metadata =
+				MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
+					contract_acc_id.clone(),
+				)
+				.call(|xc_regions| xc_regions.get_metadata(raw_region_id));
+			let get_metadata_res =
+				client.call_dry_run(&ink_e2e::alice(), &get_metadata, 0, None).await;
+
+			assert_eq!(get_metadata_res.return_value(), Err(XcRegionsError::MetadataNotFound));
 
 			Ok(())
 		}

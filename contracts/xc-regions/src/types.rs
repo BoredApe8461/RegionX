@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
+use openbrush::contracts::psp34::PSP34Error;
 use primitives::{coretime::Region, Version};
 
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
@@ -37,6 +38,8 @@ pub enum XcRegionsError {
 	RuntimeError,
 	/// The operation is not supported.
 	NotSupported,
+	/// An psp34 error occured.
+	Psp34(PSP34Error),
 }
 
 impl core::fmt::Display for XcRegionsError {
@@ -51,6 +54,7 @@ impl core::fmt::Display for XcRegionsError {
 			XcRegionsError::VersionNotFound => write!(f, "VersionNotFound"),
 			XcRegionsError::RuntimeError => write!(f, "RuntimeError"),
 			XcRegionsError::NotSupported => write!(f, "NotSupported"),
+			XcRegionsError::Psp34(err) => write!(f, "{:?}", err),
 		}
 	}
 }

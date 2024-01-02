@@ -36,17 +36,17 @@ An explanation of our solution for transferring the metadata of regions acrross 
 
 1. Make sure to have the latest [cargo contract](https://crates.io/crates/cargo-contract).
 2. Clone the GitHub repository: 
-```
-https://github.com/RegionX-Labs/RegionX.git
+```sh
+git clone https://github.com/RegionX-Labs/RegionX.git
 ```
  3. Compile and run unit tests
-```
+```sh
 cd RegionX/
 cargo build
 cargo test
 ```
 3. Build the contracts:
-```
+```sh
 # To build the xc-regions contract:
 cd contracts/xc-regions/
 cargo contract build --release
@@ -55,3 +55,31 @@ cargo contract build --release
 cd contracts/coretime-market/
 cargo contract build --release
 ```
+
+4. Running e2e-tests
+   
+	Considering that the xc-regions contract necessitates the underlying chain to implement the uniques pallet for running e2e tests, it is required to specify a custom contracts node. For this purpose, we utilize the Astar local node from [Coretime-Mock](https://github.com/RegionX-Labs/Coretime-Mock) directory:
+	```sh
+	export CONTRACTS_NODE="~/Coretime-Mock/bin/astar-collator"
+	```
+	Once that is configured, we can proceed to run the e2e tests:"
+	```sh
+	cargo test --features e2e-tests
+	```
+
+## 4. Deploy
+
+For the xc-regions contract to function correctly, the chain on which it is deployed must implement the uniques pallet. Given that the pallet index of the uniques pallet can vary across different chains, it's crucial to correctly configure this index before building and deploying the contract. To achieve this, the following steps should be taken:
+
+1. Determine the index of the uniques pallet 
+2.  Go to the `primitives/lib.rs` file:
+3. Configure the index correctly: 
+	```rust
+	#[derive(scale::Encode, scale::Decode)]
+	pub enum RuntimeCall {
+		// E.g: on shibuya this is 37. in local-runtime this is 30.
+		#[codec(index = <CORRECT PALLET INDEX>)]
+		Uniques(uniques::UniquesCall),
+	}
+	```
+Once this is correctly configured, the contract can then be deployed.

@@ -50,7 +50,7 @@ impl From<CoreMask> for u128 {
 #[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
 pub struct RegionId {
-	/// The timeslice at which the reigon starts.
+	/// The timeslice at which the region starts.
 	pub begin: Timeslice,
 	/// The index of the relay chain Core on which this Region will be scheduled.
 	pub core: CoreIndex,

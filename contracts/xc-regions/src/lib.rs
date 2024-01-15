@@ -25,7 +25,7 @@ mod tests;
 // NOTE: This should be the collection ID of the underlying region collection.
 const REGIONS_COLLECTION_ID: u32 = 42;
 
-#[openbrush::implementation(PSP34)]
+#[openbrush::implementation(PSP34, PSP34Enumerable)]
 #[openbrush::contract(env = environment::ExtendedEnvironment)]
 pub mod xc_regions {
 	use crate::{
@@ -54,6 +54,8 @@ pub mod xc_regions {
 	pub struct XcRegions {
 		#[storage_field]
 		psp34: psp34::Data,
+		#[storage_field]
+		enumerable: enumerable::Data,
 		/// A mapping that links RawRegionId to its corresponding region metadata.
 		pub regions: Mapping<RawRegionId, Region>,
 		/// A mapping that keeps track of the metadata version for each region.

@@ -13,6 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
+use openbrush::traits::AccountId;
+use primitives::Balance;
+
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub enum MarketError {
@@ -25,4 +28,17 @@ impl core::fmt::Display for MarketError {
 			MarketError::Foo => write!(f, "Foo"),
 		}
 	}
+}
+
+#[derive(scale::Decode, scale::Encode, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
+pub struct Listing {
+	/// The `AccountId` selling the specific region.
+	pub seller: AccountId,
+	/// The bit price of a region.
+	pub bit_price: Balance,
+	/// The `AccountId` receiving the payment from the sale.
+	///
+	/// If not set specified otherwise this should be the `seller` account.
+	pub sale_recepient: AccountId,
 }

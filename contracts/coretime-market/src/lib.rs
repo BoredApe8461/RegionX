@@ -20,15 +20,15 @@ mod types;
 
 #[openbrush::contract]
 pub mod coretime_market {
-	use crate::types::MarketError;
-	use openbrush::traits::Storage;
+	use crate::types::{Listing, MarketError};
+	use openbrush::{storage::Mapping, traits::Storage};
 	use primitives::{coretime::RawRegionId, Version};
 
 	#[ink(storage)]
 	#[derive(Default, Storage)]
 	pub struct CoretimeMarket {
-		// FIXME: ink! smart contract boilerplate
-		foo: u8,
+		/// A mapping that holds information about each region listed for sale.
+		pub listings: Mapping<RawRegionId, Listing>,
 	}
 
 	impl CoretimeMarket {

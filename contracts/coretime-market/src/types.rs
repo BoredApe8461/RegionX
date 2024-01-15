@@ -13,28 +13,16 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std, no_main)]
-#![feature(min_specialization)]
+#[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+pub enum MarketError {
+	Foo,
+}
 
-#[openbrush::contract]
-pub mod coretime_market {
-	use openbrush::traits::Storage;
-
-	#[ink(storage)]
-	#[derive(Default, Storage)]
-	pub struct CoretimeMarket {
-		// FIXME: ink! smart contract boilerplate
-		foo: u8,
-	}
-
-	impl CoretimeMarket {
-		#[ink(constructor)]
-		pub fn new() -> Self {
-			Default::default()
+impl core::fmt::Display for MarketError {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		match self {
+			MarketError::Foo => write!(f, "Foo"),
 		}
-
-		// FIXME: ink! smart contract boilerplate
-		#[ink(message)]
-		pub fn foo(&self) {}
 	}
 }

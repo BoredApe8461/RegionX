@@ -14,16 +14,19 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 # OpenBrush dependency
 openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = "develop", default-features = false, features=["psp34"] }
 
+primitives = { path = "../../primitives", default-features = false  }
+
 [dev-dependencies]
 ink_e2e = "4.2.1"
 
 [lib]
-path = "lib.rs"
+path = "src/lib.rs"
 
 [features]
 default = ["std"]
 std = [
     "ink/std",
+    "primitives/std",
     "scale/std",
     "scale-info/std",
     "openbrush/std",

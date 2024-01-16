@@ -21,20 +21,23 @@ mod types;
 #[openbrush::contract]
 pub mod coretime_market {
 	use crate::types::{Listing, MarketError};
-	use openbrush::{storage::Mapping, traits::Storage};
+	use openbrush::{contracts::traits::psp34::Id, storage::Mapping, traits::Storage};
 	use primitives::{coretime::RawRegionId, Version};
+	use xc_regions::{traits::RegionMetadataRef, PSP34Ref};
 
 	#[ink(storage)]
-	#[derive(Default, Storage)]
+	#[derive(Storage)]
 	pub struct CoretimeMarket {
 		/// A mapping that holds information about each region listed for sale.
 		pub listings: Mapping<RawRegionId, Listing>,
+		/// The `AccountId` of the xc-regions contract.
+		pub xc_regions: AccountId,
 	}
 
 	impl CoretimeMarket {
 		#[ink(constructor)]
-		pub fn new() -> Self {
-			Default::default()
+		pub fn new(xc_regions: AccountId) -> Self {
+			Self { listings: Default::default(), xc_regions }
 		}
 
 		/// A function for listing a region on sale.
@@ -44,12 +47,22 @@ pub mod coretime_market {
 		///   list for sale.
 		/// - `bit_price`: The price for the smallest unit of the region. This is the price for a
 		///   single bit of the region's coremask, i.e., 1/80th of the total price.
+		///
+		/// Before making this call, the caller must first approve their region to the market
+		/// contract, as it will be transferred to the contract when listed for sale.
 		#[ink(message)]
-		pub fn list_region(
-			&self,
-			_region_id: RawRegionId,
-			_bit_price: Balance,
-		) -> Result<(), MarketError> {
+		pub fn list_region(&self, id: Id, _bit_price: Balance) -> Result<(), MarketError> {
+			let market = self.env().account_id();
+
+			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
+
+			let metadata = RegionMetadataRef::get_metadata(&self.xc_regions, region_id)
+				.map_err(MarketError::XcRegionsMetadataError);
+
+			// Transfer the region to the
+			PSP34Ref::transfer(&self.xc_regions, market, id, vec![])
+				.map_err(MarketError::XcRegionsPsp34Error)?;
+
 			todo!()
 		}
 

@@ -13,19 +13,27 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-use openbrush::traits::AccountId;
+use openbrush::{contracts::traits::psp34::PSP34Error, traits::AccountId};
 use primitives::Balance;
+use xc_regions::types::XcRegionsError;
 
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub enum MarketError {
-	Foo,
+	/// The provided identifier is not a valid region id.
+	InvalidRegionId,
+	/// An error occured when calling the xc-regions contract through the psp34 interface.
+	XcRegionsPsp34Error(PSP34Error),
+	/// An error occured when calling the xc-regions contract through the metadata interface.
+	XcRegionsMetadataError(XcRegionsError),
 }
 
 impl core::fmt::Display for MarketError {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		match self {
-			MarketError::Foo => write!(f, "Foo"),
+			MarketError::InvalidRegionId => write!(f, "InvalidRegionId"),
+			MarketError::XcRegionsPsp34Error(e) => write!(f, "{:?}", e),
+			MarketError::XcRegionsMetadataError(e) => write!(f, "{}", e),
 		}
 	}
 }

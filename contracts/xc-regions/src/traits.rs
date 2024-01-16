@@ -16,6 +16,9 @@
 use crate::types::{VersionedRegion, XcRegionsError};
 use primitives::coretime::{RawRegionId, Region};
 
+#[openbrush::wrapper]
+pub type RegionMetadataRef = dyn RegionMetadata;
+
 /// This is based on: https://hackmd.io/@Szegoo/rkryxwdIp
 #[openbrush::trait_definition]
 pub trait RegionMetadata {

@@ -18,9 +18,15 @@
 
 mod types;
 
-#[openbrush::contract]
+#[openbrush::contract(env = environment::ExtendedEnvironment)]
 pub mod coretime_market {
 	use crate::types::{Listing, MarketError};
+	use environment::ExtendedEnvironment;
+	use ink::{
+		codegen::{EmitEvent, Env},
+		reflect::ContractEventBase,
+		EnvAccess,
+	};
 	use openbrush::{contracts::traits::psp34::Id, storage::Mapping, traits::Storage};
 	use primitives::{coretime::RawRegionId, Version};
 	use xc_regions::{traits::RegionMetadataRef, PSP34Ref};
@@ -28,6 +34,7 @@ pub mod coretime_market {
 	#[ink(storage)]
 	#[derive(Storage)]
 	pub struct CoretimeMarket {
+		// TODO: enable enumeration.
 		/// A mapping that holds information about each region listed for sale.
 		pub listings: Mapping<RawRegionId, Listing>,
 		/// The `AccountId` of the xc-regions contract.
@@ -53,6 +60,11 @@ pub mod coretime_market {
 		#[ink(constructor)]
 		pub fn new(xc_regions: AccountId) -> Self {
 			Self { listings: Default::default(), xc_regions }
+		}
+
+		#[ink(message)]
+		pub fn get_xc_regions(&self) -> AccountId {
+			self.xc_regions
 		}
 
 		/// A function for listing a region on sale.
@@ -84,7 +96,7 @@ pub mod coretime_market {
 				.map_err(MarketError::XcRegionsMetadataError)?;
 
 			// Transfer the region to the market.
-			PSP34Ref::transfer(&self.xc_regions, market, id.clone(), vec![])
+			PSP34Ref::transfer(&self.xc_regions, market, id.clone(), Default::default())
 				.map_err(MarketError::XcRegionsPsp34Error)?;
 
 			let sale_recipient = sale_recipient.unwrap_or(caller);
@@ -99,7 +111,7 @@ pub mod coretime_market {
 				},
 			);
 
-			self.env().emit_event(RegionListed {
+			self.emit_event(RegionListed {
 				id,
 				bit_price,
 				seller: caller,
@@ -149,6 +161,58 @@ pub mod coretime_market {
 			_metadata_version: Version,
 		) -> Result<(), MarketError> {
 			todo!()
+		}
+	}
+
+	// Internal functions:
+	impl CoretimeMarket {
+		fn emit_event<Event: Into<<CoretimeMarket as ContractEventBase>::Type>>(&self, e: Event) {
+			<EnvAccess<'_, ExtendedEnvironment> as EmitEvent<CoretimeMarket>>::emit_event::<Event>(
+				self.env(),
+				e,
+			);
+		}
+	}
+
+	#[cfg(all(test, feature = "e2e-tests"))]
+	pub mod tests {
+		use super::*;
+		use environment::ExtendedEnvironment;
+		use ink_e2e::MessageBuilder;
+		use xc_regions::xc_regions::XcRegionsRef;
+
+		type E2EResult<T> = Result<T, Box<dyn std::error::Error>>;
+
+		#[ink_e2e::test(environment = ExtendedEnvironment)]
+		async fn constructor_works(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
+			let constructor = XcRegionsRef::new();
+			let xc_regions_acc_id = client
+				.instantiate("xc-regions", &ink_e2e::alice(), constructor, 0, None)
+				.await
+				.expect("instantiate failed")
+				.account_id;
+
+			let constructor = CoretimeMarketRef::new(xc_regions_acc_id);
+			let market_acc_id = client
+				.instantiate("coretime-market", &ink_e2e::alice(), constructor, 0, None)
+				.await
+				.expect("instantiate failed")
+				.account_id;
+
+			let get_xc_regions =
+				MessageBuilder::<ExtendedEnvironment, CoretimeMarketRef>::from_account_id(
+					market_acc_id.clone(),
+				)
+				.call(|market| market.get_xc_regions());
+			let get_res = client.call_dry_run(&ink_e2e::alice(), &get_xc_regions, 0, None).await;
+			assert_eq!(get_res.return_value(), xc_regions_acc_id);
+
+			Ok(())
+		}
+
+		#[ink_e2e::test(environment = ExtendedEnvironment)]
+		async fn list_region_works(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
+			Ok(())
 		}
 	}
 }

@@ -14,7 +14,7 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
 use openbrush::{contracts::traits::psp34::PSP34Error, traits::AccountId};
-use primitives::Balance;
+use primitives::{Balance, Version};
 use xc_regions::types::XcRegionsError;
 
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
@@ -48,5 +48,7 @@ pub struct Listing {
 	/// The `AccountId` receiving the payment from the sale.
 	///
 	/// If not set specified otherwise this should be the `seller` account.
-	pub sale_recepient: AccountId,
+	pub sale_recipient: AccountId,
+	/// The metadata version of the region listed on sale. Used to prevent front running attacks.
+	pub metadat_version: Version,
 }

@@ -20,7 +20,7 @@ pub mod macros;
 pub mod uniques;
 
 /// Balance of an account.
-pub type Balance = u64;
+pub type Balance = u128;
 
 /// The type used for versioning metadata.
 pub type Version = u32;

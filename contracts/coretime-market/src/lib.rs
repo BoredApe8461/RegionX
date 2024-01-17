@@ -34,6 +34,21 @@ pub mod coretime_market {
 		pub xc_regions: AccountId,
 	}
 
+	#[ink(event)]
+	pub struct RegionListed {
+		/// The identifier of the region that got listed on sale.
+		#[ink(topic)]
+		pub(crate) id: Id,
+		/// The bit price of the listed region.
+		pub(crate) bit_price: Balance,
+		/// The seller of the region
+		pub(crate) seller: AccountId,
+		/// The sale revenue recipient.
+		pub(crate) sale_recipient: AccountId,
+		/// The metadata version of the region.
+		pub(crate) metadata_version: Version,
+	}
+
 	impl CoretimeMarket {
 		#[ink(constructor)]
 		pub fn new(xc_regions: AccountId) -> Self {
@@ -47,23 +62,52 @@ pub mod coretime_market {
 		///   list for sale.
 		/// - `bit_price`: The price for the smallest unit of the region. This is the price for a
 		///   single bit of the region's coremask, i.e., 1/80th of the total price.
+		/// - `sale_recipient`: The `AccountId` receiving the payment from the sale. If not
+		///   specified this will be the caller.
 		///
 		/// Before making this call, the caller must first approve their region to the market
 		/// contract, as it will be transferred to the contract when listed for sale.
 		#[ink(message)]
-		pub fn list_region(&self, id: Id, _bit_price: Balance) -> Result<(), MarketError> {
+		pub fn list_region(
+			&mut self,
+			id: Id,
+			bit_price: Balance,
+			sale_recipient: Option<AccountId>,
+		) -> Result<(), MarketError> {
+			let caller = self.env().caller();
 			let market = self.env().account_id();
 
 			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
 
+			// Ensure that the region exists and its metadata is set.
 			let metadata = RegionMetadataRef::get_metadata(&self.xc_regions, region_id)
-				.map_err(MarketError::XcRegionsMetadataError);
+				.map_err(MarketError::XcRegionsMetadataError)?;
 
-			// Transfer the region to the
-			PSP34Ref::transfer(&self.xc_regions, market, id, vec![])
+			// Transfer the region to the market.
+			PSP34Ref::transfer(&self.xc_regions, market, id.clone(), vec![])
 				.map_err(MarketError::XcRegionsPsp34Error)?;
 
-			todo!()
+			let sale_recipient = sale_recipient.unwrap_or(caller);
+
+			self.listings.insert(
+				&region_id,
+				&Listing {
+					seller: caller,
+					bit_price,
+					sale_recipient,
+					metadat_version: metadata.version,
+				},
+			);
+
+			self.env().emit_event(RegionListed {
+				id,
+				bit_price,
+				seller: caller,
+				sale_recipient,
+				metadata_version: metadata.version,
+			});
+
+			Ok(())
 		}
 
 		/// A function for unlisting a region on sale.

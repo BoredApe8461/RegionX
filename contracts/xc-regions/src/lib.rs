@@ -212,6 +212,7 @@ pub mod xc_regions {
 			let owner =
 				psp34::PSP34Impl::owner_of(self, id.clone()).ok_or(XcRegionsError::CannotRemove)?;
 
+			ensure!(owner == self.env().caller(), XcRegionsError::CannotRemove);
 			self.regions.remove(region_id);
 
 			psp34::InternalImpl::_burn_from(self, owner, id).map_err(XcRegionsError::Psp34)?;

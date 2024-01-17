@@ -19,7 +19,7 @@ use primitives::coretime::{RawRegionId, Region};
 #[openbrush::wrapper]
 pub type RegionMetadataRef = dyn RegionMetadata;
 
-/// This is based on: https://hackmd.io/@Szegoo/rkryxwdIp
+/// This is based on: `<https://hackmd.io/@Szegoo/rkryxwdIp>`
 #[openbrush::trait_definition]
 pub trait RegionMetadata {
 	#[ink(message)]

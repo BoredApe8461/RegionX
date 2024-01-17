@@ -13,6 +13,19 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
+//! Coretime market
+//!
+//! This is the contract implementation of a Coretime marketplace working on top of the `XcRegions`
+//! contract.
+//!
+//! The contract employs a bit-based pricing model that determines the price of regions on sale,
+//! based on the value of a single core mask bit. This approach is useful as it allows us to emulate
+//! the expiring nature of Coretime.
+//!
+//! ## Terminology:
+//!
+//! - Expired region: A region that can no longer be assigned to any particular task.
+
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![feature(min_specialization)]
 
@@ -90,7 +103,13 @@ pub mod coretime_market {
 		///
 		/// Before making this call, the caller must first approve their region to the market
 		/// contract, as it will be transferred to the contract when listed for sale.
+		///
+		/// This call is payable because listing a region requires a deposit from the user. This
+		/// deposit will be returned upon unlisting the region from sale. The rationale behind this
+		/// requirement is to prevent the contract state from becoming bloated with regions that
+		/// have expired.
 		#[ink(message)]
+		#[ink(payable)]
 		pub fn list_region(
 			&mut self,
 			id: Id,
@@ -105,6 +124,8 @@ pub mod coretime_market {
 			// Ensure that the region exists and its metadata is set.
 			let metadata = RegionMetadataRef::get_metadata(&self.xc_regions_contract, region_id)
 				.map_err(MarketError::XcRegionsMetadataError)?;
+
+			// TODO: take deposit.
 
 			// Transfer the region to the market.
 			PSP34Ref::transfer(&self.xc_regions_contract, market, id.clone(), Default::default())

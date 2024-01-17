@@ -207,7 +207,7 @@ pub mod xc_regions {
 		/// ## Events:
 		/// On success this ink message emits the `RegionRemoved` event.
 		#[ink(message)]
-		fn(&mut self, region_id: RawRegionId) -> Result<(), XcRegionsError> {
+		fn remove(&mut self, region_id: RawRegionId) -> Result<(), XcRegionsError> {
 			let id = Id::U128(region_id);
 			let owner =
 				psp34::PSP34Impl::owner_of(self, id.clone()).ok_or(XcRegionsError::CannotRemove)?;

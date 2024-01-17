@@ -199,7 +199,7 @@ pub mod xc_regions {
 		/// This process involves burning the wrapped region and eliminating its associated
 		/// metadata.
 		///
-		///Only the owner of the wrapped region can call this function.
+		/// Only the owner of the wrapped region can call this function.
 		///
 		/// ## Arguments:
 		/// - `raw_region_id` - The `u128` encoded region identifier.
@@ -207,7 +207,7 @@ pub mod xc_regions {
 		/// ## Events:
 		/// On success this ink message emits the `RegionRemoved` event.
 		#[ink(message)]
-		fn remove(&mut self, region_id: RawRegionId) -> Result<(), XcRegionsError> {
+		fn(&mut self, region_id: RawRegionId) -> Result<(), XcRegionsError> {
 			let id = Id::U128(region_id);
 			let owner =
 				psp34::PSP34Impl::owner_of(self, id.clone()).ok_or(XcRegionsError::CannotRemove)?;

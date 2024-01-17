@@ -42,7 +42,7 @@ pub mod coretime_market {
 		EnvAccess,
 	};
 	use openbrush::{contracts::traits::psp34::Id, storage::Mapping, traits::Storage};
-	use primitives::{coretime::RawRegionId, Version};
+	use primitives::{coretime::{RawRegionId, Timeslice}, Version};
 	use xc_regions::{traits::RegionMetadataRef, PSP34Ref};
 
 	#[ink(storage)]
@@ -100,6 +100,7 @@ pub mod coretime_market {
 		///   single bit of the region's coremask, i.e., 1/80th of the total price.
 		/// - `sale_recipient`: The `AccountId` receiving the payment from the sale. If not
 		///   specified this will be the caller.
+		/// - `current_timeslice`: The current timeslice. NOTE: this can't be deterministic.
 		///
 		/// Before making this call, the caller must first approve their region to the market
 		/// contract, as it will be transferred to the contract when listed for sale.
@@ -115,6 +116,7 @@ pub mod coretime_market {
 			id: Id,
 			bit_price: Balance,
 			sale_recipient: Option<AccountId>,
+			current_timeslice: Timeslice,
 		) -> Result<(), MarketError> {
 			let caller = self.env().caller();
 			let market = self.env().account_id();
@@ -124,6 +126,8 @@ pub mod coretime_market {
 			// Ensure that the region exists and its metadata is set.
 			let metadata = RegionMetadataRef::get_metadata(&self.xc_regions_contract, region_id)
 				.map_err(MarketError::XcRegionsMetadataError)?;
+
+			// TODO: sanity check `current_timeslice`
 
 			// TODO: take deposit.
 
@@ -140,6 +144,7 @@ pub mod coretime_market {
 					bit_price,
 					sale_recipient,
 					metadat_version: metadata.version,
+					listed_at: current_timeslice,
 				},
 			);
 			self.listed_regions.push(region_id);

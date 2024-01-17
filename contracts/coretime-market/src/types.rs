@@ -14,7 +14,7 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
 use openbrush::{contracts::traits::psp34::PSP34Error, traits::AccountId};
-use primitives::{Balance, Version};
+use primitives::{Balance, Version, coretime::Timeslice};
 use xc_regions::types::XcRegionsError;
 
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
@@ -51,4 +51,6 @@ pub struct Listing {
 	pub sale_recipient: AccountId,
 	/// The metadata version of the region listed on sale. Used to prevent front running attacks.
 	pub metadat_version: Version,
+	/// The timeslice when the region was listed on sale.
+	pub listed_at: Timeslice,
 }

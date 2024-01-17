@@ -24,6 +24,7 @@ pub mod coretime_market {
 	use environment::ExtendedEnvironment;
 	use ink::{
 		codegen::{EmitEvent, Env},
+		prelude::vec::Vec,
 		reflect::ContractEventBase,
 		EnvAccess,
 	};
@@ -34,11 +35,12 @@ pub mod coretime_market {
 	#[ink(storage)]
 	#[derive(Storage)]
 	pub struct CoretimeMarket {
-		// TODO: enable enumeration.
 		/// A mapping that holds information about each region listed for sale.
 		pub listings: Mapping<RawRegionId, Listing>,
+		/// A vector containing all the region ids of regions listed on sale.
+		pub listed_regions: Vec<RawRegionId>,
 		/// The `AccountId` of the xc-regions contract.
-		pub xc_regions: AccountId,
+		pub xc_regions_contract: AccountId,
 	}
 
 	#[ink(event)]
@@ -58,13 +60,22 @@ pub mod coretime_market {
 
 	impl CoretimeMarket {
 		#[ink(constructor)]
-		pub fn new(xc_regions: AccountId) -> Self {
-			Self { listings: Default::default(), xc_regions }
+		pub fn new(xc_regions_contract: AccountId) -> Self {
+			Self {
+				listings: Default::default(),
+				listed_regions: Default::default(),
+				xc_regions_contract,
+			}
 		}
 
 		#[ink(message)]
-		pub fn get_xc_regions(&self) -> AccountId {
-			self.xc_regions
+		pub fn xc_regions_contract(&self) -> AccountId {
+			self.xc_regions_contract
+		}
+
+		#[ink(message)]
+		pub fn listed_regions(&self) -> Vec<RawRegionId> {
+			self.listed_regions.clone()
 		}
 
 		/// A function for listing a region on sale.
@@ -92,11 +103,11 @@ pub mod coretime_market {
 			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
 
 			// Ensure that the region exists and its metadata is set.
-			let metadata = RegionMetadataRef::get_metadata(&self.xc_regions, region_id)
+			let metadata = RegionMetadataRef::get_metadata(&self.xc_regions_contract, region_id)
 				.map_err(MarketError::XcRegionsMetadataError)?;
 
 			// Transfer the region to the market.
-			PSP34Ref::transfer(&self.xc_regions, market, id.clone(), Default::default())
+			PSP34Ref::transfer(&self.xc_regions_contract, market, id.clone(), Default::default())
 				.map_err(MarketError::XcRegionsPsp34Error)?;
 
 			let sale_recipient = sale_recipient.unwrap_or(caller);
@@ -110,6 +121,7 @@ pub mod coretime_market {
 					metadat_version: metadata.version,
 				},
 			);
+			self.listed_regions.push(region_id);
 
 			self.emit_event(RegionListed {
 				id,
@@ -199,13 +211,24 @@ pub mod coretime_market {
 				.expect("instantiate failed")
 				.account_id;
 
-			let get_xc_regions =
+			let xc_regions_contract =
 				MessageBuilder::<ExtendedEnvironment, CoretimeMarketRef>::from_account_id(
 					market_acc_id.clone(),
 				)
-				.call(|market| market.get_xc_regions());
-			let get_res = client.call_dry_run(&ink_e2e::alice(), &get_xc_regions, 0, None).await;
-			assert_eq!(get_res.return_value(), xc_regions_acc_id);
+				.call(|market| market.xc_regions_contract());
+			let xc_regions_contract =
+				client.call_dry_run(&ink_e2e::alice(), &xc_regions_contract, 0, None).await;
+			assert_eq!(xc_regions_contract.return_value(), xc_regions_acc_id);
+
+			// There should be no regions listed on sale:
+			let listed_regions =
+				MessageBuilder::<ExtendedEnvironment, CoretimeMarketRef>::from_account_id(
+					market_acc_id.clone(),
+				)
+				.call(|market| market.listed_regions());
+			let listed_regions =
+				client.call_dry_run(&ink_e2e::alice(), &listed_regions, 0, None).await;
+			assert_eq!(listed_regions.return_value(), vec![]);
 
 			Ok(())
 		}

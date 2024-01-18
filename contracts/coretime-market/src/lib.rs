@@ -42,7 +42,10 @@ pub mod coretime_market {
 		EnvAccess,
 	};
 	use openbrush::{contracts::traits::psp34::Id, storage::Mapping, traits::Storage};
-	use primitives::{coretime::{RawRegionId, Timeslice}, Version};
+	use primitives::{
+		coretime::{RawRegionId, Timeslice},
+		ensure, Version,
+	};
 	use xc_regions::{traits::RegionMetadataRef, PSP34Ref};
 
 	#[ink(storage)]
@@ -54,6 +57,9 @@ pub mod coretime_market {
 		pub listed_regions: Vec<RawRegionId>,
 		/// The `AccountId` of the xc-regions contract.
 		pub xc_regions_contract: AccountId,
+		/// The deposit required to list a region on sale.
+		// Set on contract initialization. Can't be changed afterwards.
+		pub listing_deposit: Balance,
 	}
 
 	#[ink(event)]
@@ -73,11 +79,12 @@ pub mod coretime_market {
 
 	impl CoretimeMarket {
 		#[ink(constructor)]
-		pub fn new(xc_regions_contract: AccountId) -> Self {
+		pub fn new(xc_regions_contract: AccountId, listing_deposit: Balance) -> Self {
 			Self {
 				listings: Default::default(),
 				listed_regions: Default::default(),
 				xc_regions_contract,
+				listing_deposit,
 			}
 		}
 
@@ -109,8 +116,7 @@ pub mod coretime_market {
 		/// deposit will be returned upon unlisting the region from sale. The rationale behind this
 		/// requirement is to prevent the contract state from becoming bloated with regions that
 		/// have expired.
-		#[ink(message)]
-		#[ink(payable)]
+		#[ink(message, payable)]
 		pub fn list_region(
 			&mut self,
 			id: Id,
@@ -127,9 +133,13 @@ pub mod coretime_market {
 			let metadata = RegionMetadataRef::get_metadata(&self.xc_regions_contract, region_id)
 				.map_err(MarketError::XcRegionsMetadataError)?;
 
-			// TODO: sanity check `current_timeslice`
+			// It doesn't make sense to list a region that expired.
+			ensure!(metadata.region.end > current_timeslice, MarketError::RegionExpired);
 
-			// TODO: take deposit.
+			ensure!(
+				self.env().transferred_value() == self.listing_deposit,
+				MarketError::MissingDeposit
+			);
 
 			// Transfer the region to the market.
 			PSP34Ref::transfer(&self.xc_regions_contract, market, id.clone(), Default::default())
@@ -217,9 +227,13 @@ pub mod coretime_market {
 		use super::*;
 		use environment::ExtendedEnvironment;
 		use ink_e2e::MessageBuilder;
-		use xc_regions::xc_regions::XcRegionsRef;
+		use xc_regions::{
+			xc_regions::XcRegionsRef,
+		};
 
 		type E2EResult<T> = Result<T, Box<dyn std::error::Error>>;
+
+		const REQUIRED_DEPOSIT: Balance = 1_000;
 
 		#[ink_e2e::test(environment = ExtendedEnvironment)]
 		async fn constructor_works(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
@@ -230,7 +244,7 @@ pub mod coretime_market {
 				.expect("instantiate failed")
 				.account_id;
 
-			let constructor = CoretimeMarketRef::new(xc_regions_acc_id);
+			let constructor = CoretimeMarketRef::new(xc_regions_acc_id, REQUIRED_DEPOSIT);
 			let market_acc_id = client
 				.instantiate("coretime-market", &ink_e2e::alice(), constructor, 0, None)
 				.await
@@ -256,11 +270,6 @@ pub mod coretime_market {
 				client.call_dry_run(&ink_e2e::alice(), &listed_regions, 0, None).await;
 			assert_eq!(listed_regions.return_value(), vec![]);
 
-			Ok(())
-		}
-
-		#[ink_e2e::test(environment = ExtendedEnvironment)]
-		async fn list_region_works(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
 			Ok(())
 		}
 	}

@@ -14,7 +14,7 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
 use openbrush::{contracts::traits::psp34::PSP34Error, traits::AccountId};
-use primitives::{Balance, Version, coretime::Timeslice};
+use primitives::{coretime::Timeslice, Balance, Version};
 use xc_regions::types::XcRegionsError;
 
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
@@ -22,6 +22,10 @@ use xc_regions::types::XcRegionsError;
 pub enum MarketError {
 	/// The provided identifier is not a valid region id.
 	InvalidRegionId,
+	/// The specified region is expired.
+	RegionExpired,
+	/// The caller made the call without sending the required deposit amount.
+	MissingDeposit,
 	/// An error occured when calling the xc-regions contract through the psp34 interface.
 	XcRegionsPsp34Error(PSP34Error),
 	/// An error occured when calling the xc-regions contract through the metadata interface.
@@ -32,6 +36,8 @@ impl core::fmt::Display for MarketError {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		match self {
 			MarketError::InvalidRegionId => write!(f, "InvalidRegionId"),
+			MarketError::RegionExpired => write!(f, "RegionExpired"),
+			MarketError::MissingDeposit => write!(f, "MissingDeposit"),
 			MarketError::XcRegionsPsp34Error(e) => write!(f, "{:?}", e),
 			MarketError::XcRegionsMetadataError(e) => write!(f, "{}", e),
 		}

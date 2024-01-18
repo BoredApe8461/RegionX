@@ -25,7 +25,7 @@ mod tests;
 pub use crate::xc_regions::PSP34Ref;
 
 // NOTE: This should be the collection ID of the underlying region collection.
-const REGIONS_COLLECTION_ID: u32 = 42;
+pub const REGIONS_COLLECTION_ID: u32 = 42;
 
 #[openbrush::implementation(PSP34, PSP34Enumerable)]
 #[openbrush::contract(env = environment::ExtendedEnvironment)]

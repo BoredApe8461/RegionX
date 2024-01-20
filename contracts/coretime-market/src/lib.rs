@@ -246,8 +246,8 @@ pub mod coretime_market {
 			self.listed_regions.remove(region_index);
 			self.listings.remove(&region_id);
 
-			// Transfer the tokens to seller.
-			self.env().transfer(listing.seller, transferred_value).map_err(|_| MarketError::TransferFailed)?;
+			// Transfer the tokens to the sale recipient.
+			self.env().transfer(listing.sale_recipient, transferred_value).map_err(|_| MarketError::TransferFailed)?;
 
 			Ok(())
 		}

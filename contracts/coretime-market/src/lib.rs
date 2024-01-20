@@ -33,7 +33,7 @@ mod types;
 
 #[openbrush::contract(env = environment::ExtendedEnvironment)]
 pub mod coretime_market {
-	use crate::types::{Listing, MarketError};
+	use crate::types::{Listing, MarketError, Moment};
 	use environment::ExtendedEnvironment;
 	use ink::{
 		codegen::{EmitEvent, Env},
@@ -43,7 +43,7 @@ pub mod coretime_market {
 	};
 	use openbrush::{contracts::traits::psp34::Id, storage::Mapping, traits::Storage};
 	use primitives::{
-		coretime::{RawRegionId, Timeslice},
+		coretime::{RawRegionId, Timeslice, TIMESLICE_DURATION_IN_BLOCKS},
 		ensure, Version,
 	};
 	use xc_regions::{traits::RegionMetadataRef, PSP34Ref};
@@ -77,6 +77,17 @@ pub mod coretime_market {
 		pub(crate) metadata_version: Version,
 	}
 
+	#[ink(event)]
+	pub struct RegionPurchased {
+		/// The identifier of the region that got listed on sale.
+		#[ink(topic)]
+		pub(crate) id: Id,
+		/// The buyer of the region
+		pub(crate) buyer: AccountId,
+		/// The total price paid for the listed region.
+		pub(crate) total_price: Balance,
+	}
+
 	impl CoretimeMarket {
 		#[ink(constructor)]
 		pub fn new(xc_regions_contract: AccountId, listing_deposit: Balance) -> Self {
@@ -97,6 +108,8 @@ pub mod coretime_market {
 		pub fn listed_regions(&self) -> Vec<RawRegionId> {
 			self.listed_regions.clone()
 		}
+
+		// TODO: view function to query the price
 
 		/// A function for listing a region on sale.
 		///
@@ -151,10 +164,14 @@ pub mod coretime_market {
 				&region_id,
 				&Listing {
 					seller: caller,
+					region: metadata.region,
 					bit_price,
 					sale_recipient,
-					metadat_version: metadata.version,
-					listed_at: current_timeslice,
+					metadata_version: metadata.version,
+					listed_at: Moment {
+						block_number: self.env().block_number(),
+						timeslice: current_timeslice,
+					},
 				},
 			);
 			self.listed_regions.push(region_id);
@@ -202,18 +219,63 @@ pub mod coretime_market {
 		/// - `metadata_version`: The required metadata version for the region. If the
 		///   `metadata_version` does not match the current version stored in the xc-regions
 		///   contract the purchase will fail.
-		#[ink(message)]
+		#[ink(message, payable)]
 		pub fn purchase_region(
-			&self,
-			_region_id: RawRegionId,
-			_metadata_version: Version,
+			&mut self,
+			id: Id,
+			metadata_version: Version,
 		) -> Result<(), MarketError> {
-			todo!()
+			let transferred_value = self.env().transferred_value();
+
+			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
+			let listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
+
+			let price = self.calculate_region_price(listing.clone());
+			ensure!(transferred_value >= price, MarketError::InsufficientFunds);
+
+			ensure!(listing.metadata_version == metadata_version, MarketError::MetadataNotMatching);
+
+			// Transfer the region to the buyer.
+			PSP34Ref::transfer(&self.xc_regions_contract, self.env().caller(), id.clone(), Default::default())
+				.map_err(MarketError::XcRegionsPsp34Error)?;
+
+			// Remove the region from sale:
+
+			let region_index = self.listed_regions.iter().position(|r| *r == region_id).ok_or(MarketError::RegionNotListed)?;
+
+			self.listed_regions.remove(region_index);
+			self.listings.remove(&region_id);
+
+			// Transfer the tokens to seller.
+			self.env().transfer(listing.seller, transferred_value).map_err(|_| MarketError::TransferFailed)?;
+
+			Ok(())
 		}
 	}
 
 	// Internal functions:
 	impl CoretimeMarket {
+		fn calculate_region_price(&self, listing: Listing) -> Balance {
+			let current_block_number = self.env().block_number();
+
+			let current_timeslice = listing.listed_at.timeslice +
+				((current_block_number - listing.listed_at.block_number) /
+					TIMESLICE_DURATION_IN_BLOCKS);
+
+			let price = listing.region.mask.count_ones() as Balance * listing.bit_price;
+
+			if current_timeslice < listing.region.begin {
+				// The region is not yet active, hence the price has not yet decreased.
+				return price;
+			}
+
+			let wasted = current_timeslice - listing.region.begin;
+			// TODO don't round to 2 decimals. Or at least don't hardcode like this.
+			let percentage_wasted = ((listing.region.end - listing.region.begin) * 100) / wasted;
+
+			(price * 100) - (price * percentage_wasted as Balance)
+		}
+
 		fn emit_event<Event: Into<<CoretimeMarket as ContractEventBase>::Type>>(&self, e: Event) {
 			<EnvAccess<'_, ExtendedEnvironment> as EmitEvent<CoretimeMarket>>::emit_event::<Event>(
 				self.env(),
@@ -227,9 +289,7 @@ pub mod coretime_market {
 		use super::*;
 		use environment::ExtendedEnvironment;
 		use ink_e2e::MessageBuilder;
-		use xc_regions::{
-			xc_regions::XcRegionsRef,
-		};
+		use xc_regions::xc_regions::XcRegionsRef;
 
 		type E2EResult<T> = Result<T, Box<dyn std::error::Error>>;
 

@@ -35,11 +35,24 @@ pub const TIMESLICE_DURATION_IN_BLOCKS: BlockNumber = 80;
 pub struct CoreMask([u8; 10]);
 
 impl CoreMask {
+	pub fn void() -> Self {
+		Self([0u8; 10])
+	}
+	pub fn complete() -> Self {
+		Self([255u8; 10])
+	}
 	pub fn count_zeros(&self) -> u32 {
 		self.0.iter().map(|i| i.count_zeros()).sum()
 	}
 	pub fn count_ones(&self) -> u32 {
 		self.0.iter().map(|i| i.count_ones()).sum()
+	}
+	pub fn from_chunk(from: u32, to: u32) -> Self {
+		let mut v = [0u8; 10];
+		for i in (from.min(80) as usize)..(to.min(80) as usize) {
+			v[i / 8] |= 128 >> (i % 8);
+		}
+		Self(v)
 	}
 }
 

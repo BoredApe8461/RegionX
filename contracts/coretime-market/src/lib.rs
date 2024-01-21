@@ -25,9 +25,13 @@
 //! ## Terminology:
 //!
 //! - Expired region: A region that can no longer be assigned to any particular task.
+//! - Active region: A region which is currently able to have workload performed.
 
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![feature(min_specialization)]
+
+#[cfg(test)]
+mod tests;
 
 mod types;
 
@@ -47,6 +51,8 @@ pub mod coretime_market {
 		ensure, Version,
 	};
 	use xc_regions::{traits::RegionMetadataRef, PSP34Ref};
+
+	const PRECISION: Balance = 100;
 
 	#[ink(storage)]
 	#[derive(Storage)]
@@ -109,7 +115,13 @@ pub mod coretime_market {
 			self.listed_regions.clone()
 		}
 
-		// TODO: view function to query the price
+		#[ink(message)]
+		pub fn region_price(&self, id: Id) -> Result<Balance, MarketError> {
+			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
+			let listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
+
+			Self::calculate_region_price(self.env().block_number(), listing)
+		}
 
 		/// A function for listing a region on sale.
 		///
@@ -230,24 +242,35 @@ pub mod coretime_market {
 			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
 			let listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
 
-			let price = self.calculate_region_price(listing.clone());
+			let price = Self::calculate_region_price(self.env().block_number(), listing.clone())?;
 			ensure!(transferred_value >= price, MarketError::InsufficientFunds);
 
 			ensure!(listing.metadata_version == metadata_version, MarketError::MetadataNotMatching);
 
 			// Transfer the region to the buyer.
-			PSP34Ref::transfer(&self.xc_regions_contract, self.env().caller(), id.clone(), Default::default())
-				.map_err(MarketError::XcRegionsPsp34Error)?;
+			PSP34Ref::transfer(
+				&self.xc_regions_contract,
+				self.env().caller(),
+				id.clone(),
+				Default::default(),
+			)
+			.map_err(MarketError::XcRegionsPsp34Error)?;
 
 			// Remove the region from sale:
 
-			let region_index = self.listed_regions.iter().position(|r| *r == region_id).ok_or(MarketError::RegionNotListed)?;
+			let region_index = self
+				.listed_regions
+				.iter()
+				.position(|r| *r == region_id)
+				.ok_or(MarketError::RegionNotListed)?;
 
 			self.listed_regions.remove(region_index);
 			self.listings.remove(&region_id);
 
 			// Transfer the tokens to the sale recipient.
-			self.env().transfer(listing.sale_recipient, transferred_value).map_err(|_| MarketError::TransferFailed)?;
+			self.env()
+				.transfer(listing.sale_recipient, transferred_value)
+				.map_err(|_| MarketError::TransferFailed)?;
 
 			Ok(())
 		}
@@ -255,25 +278,35 @@ pub mod coretime_market {
 
 	// Internal functions:
 	impl CoretimeMarket {
-		fn calculate_region_price(&self, listing: Listing) -> Balance {
-			let current_block_number = self.env().block_number();
-
+		pub(crate) fn calculate_region_price(
+			current_block_number: BlockNumber,
+			listing: Listing,
+		) -> Result<Balance, MarketError> {
+			// TODO: safe arithmetics:
 			let current_timeslice = listing.listed_at.timeslice +
 				((current_block_number - listing.listed_at.block_number) /
 					TIMESLICE_DURATION_IN_BLOCKS);
 
+			// TODO: this is wrong:
 			let price = listing.region.mask.count_ones() as Balance * listing.bit_price;
 
 			if current_timeslice < listing.region.begin {
 				// The region is not yet active, hence the price has not yet decreased.
-				return price;
+				return Ok(price);
 			}
 
-			let wasted = current_timeslice - listing.region.begin;
-			// TODO don't round to 2 decimals. Or at least don't hardcode like this.
-			let percentage_wasted = ((listing.region.end - listing.region.begin) * 100) / wasted;
+			let duration = listing.region.end.saturating_sub(listing.region.begin) as Balance;
+			let wasted_timeslices =
+				current_timeslice.saturating_sub(listing.region.begin) as Balance;
 
-			(price * 100) - (price * percentage_wasted as Balance)
+			let scaled_wasted =
+				wasted_timeslices.checked_mul(PRECISION).ok_or(MarketError::ArithmeticError)?;
+			let wasted = scaled_wasted.checked_div(duration).ok_or(MarketError::ArithmeticError)?;
+
+			let remaining = PRECISION.checked_sub(wasted).ok_or(MarketError::ArithmeticError)?;
+			let scaled_price = price.checked_mul(remaining).ok_or(MarketError::ArithmeticError)?;
+
+			scaled_price.checked_div(PRECISION).ok_or(MarketError::ArithmeticError)
 		}
 
 		fn emit_event<Event: Into<<CoretimeMarket as ContractEventBase>::Type>>(&self, e: Event) {

@@ -26,6 +26,8 @@ use xc_regions::types::XcRegionsError;
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub enum MarketError {
+	/// An arithmetic error occured.
+	ArithmeticError,
 	/// The provided identifier is not a valid region id.
 	InvalidRegionId,
 	/// The specified region is expired.
@@ -49,6 +51,7 @@ pub enum MarketError {
 impl core::fmt::Display for MarketError {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		match self {
+			MarketError::ArithmeticError => write!(f, "ArithmeticError"),
 			MarketError::InvalidRegionId => write!(f, "InvalidRegionId"),
 			MarketError::RegionExpired => write!(f, "RegionExpired"),
 			MarketError::MissingDeposit => write!(f, "MissingDeposit"),

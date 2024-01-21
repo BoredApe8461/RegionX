@@ -10,6 +10,17 @@ use openbrush::traits::BlockNumber;
 use primitives::coretime::{CoreMask, Region, Timeslice, TIMESLICE_DURATION_IN_BLOCKS};
 
 #[test]
+fn current_timeslice_works() {
+	let reference = Moment { block_number: 0, timeslice: 0 };
+	assert_eq!(CoretimeMarket::current_timeslice(0, reference.clone()), 0);
+	assert_eq!(CoretimeMarket::current_timeslice(timeslice_to_block_number(5), reference), 5);
+
+	let reference = Moment { block_number: 80, timeslice: 1 };
+	assert_eq!(CoretimeMarket::current_timeslice(80, reference.clone()), 1);
+	assert_eq!(CoretimeMarket::current_timeslice(timeslice_to_block_number(42), reference), 42);
+}
+
+#[test]
 fn calculate_region_price_works() {
 	let DefaultAccounts::<DefaultEnvironment> { charlie, .. } = get_default_accounts();
 

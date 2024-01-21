@@ -25,7 +25,8 @@
 //! ## Terminology:
 //!
 //! - Expired region: A region that can no longer be assigned to any particular task.
-//! - Active region: A region which is currently able to have workload performed.
+//! - Active region: A region which is currently able to perform a task. I.e. current timeslice >
+//!   region.begin
 
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![feature(min_specialization)]
@@ -181,6 +182,7 @@ pub mod coretime_market {
 					sale_recipient,
 					metadata_version: metadata.version,
 					listed_at: Moment {
+						// TODO: doesn't make sense to put the current block number.
 						block_number: self.env().block_number(),
 						timeslice: current_timeslice,
 					},
@@ -282,17 +284,18 @@ pub mod coretime_market {
 			current_block_number: BlockNumber,
 			listing: Listing,
 		) -> Result<Balance, MarketError> {
-			// TODO: safe arithmetics:
-			let current_timeslice = listing.listed_at.timeslice +
-				((current_block_number - listing.listed_at.block_number) /
-					TIMESLICE_DURATION_IN_BLOCKS);
+			let current_timeslice =
+				Self::current_timeslice(current_block_number, listing.listed_at);
 
 			if current_timeslice < listing.region.begin {
 				// The region is not yet active, hence the price has not yet decreased.
-				let price = listing.region.mask.count_ones() as Balance * listing.bit_price;
+				let price =
+					listing.bit_price.saturating_mul(listing.region.mask.count_ones() as Balance);
+
 				return Ok(price);
 			}
 
+			// Ok to use saturating since `region.end` is always greater than `region.begin` anyway.
 			let duration = listing.region.end.saturating_sub(listing.region.begin) as Balance;
 			let wasted_timeslices =
 				current_timeslice.saturating_sub(listing.region.begin) as Balance;
@@ -312,6 +315,18 @@ pub mod coretime_market {
 				listing.bit_price;
 
 			Ok(price)
+		}
+
+		pub(crate) fn current_timeslice(
+			current_block_number: BlockNumber,
+			reference: Moment,
+		) -> Timeslice {
+			let elapsed_blocks = current_block_number.saturating_sub(reference.block_number);
+			let elapsed_timeslices = elapsed_blocks.saturating_div(TIMESLICE_DURATION_IN_BLOCKS);
+
+			let current_timeslice = reference.timeslice.saturating_add(elapsed_timeslices);
+
+			current_timeslice
 		}
 
 		fn emit_event<Event: Into<<CoretimeMarket as ContractEventBase>::Type>>(&self, e: Event) {

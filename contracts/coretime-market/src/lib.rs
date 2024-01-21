@@ -287,11 +287,9 @@ pub mod coretime_market {
 				((current_block_number - listing.listed_at.block_number) /
 					TIMESLICE_DURATION_IN_BLOCKS);
 
-			// TODO: this is wrong:
-			let price = listing.region.mask.count_ones() as Balance * listing.bit_price;
-
 			if current_timeslice < listing.region.begin {
 				// The region is not yet active, hence the price has not yet decreased.
+				let price = listing.region.mask.count_ones() as Balance * listing.bit_price;
 				return Ok(price);
 			}
 
@@ -303,10 +301,17 @@ pub mod coretime_market {
 				wasted_timeslices.checked_mul(PRECISION).ok_or(MarketError::ArithmeticError)?;
 			let wasted = scaled_wasted.checked_div(duration).ok_or(MarketError::ArithmeticError)?;
 
-			let remaining = PRECISION.checked_sub(wasted).ok_or(MarketError::ArithmeticError)?;
-			let scaled_price = price.checked_mul(remaining).ok_or(MarketError::ArithmeticError)?;
+			let current_bit_index_scaled = wasted
+				.checked_mul(TIMESLICE_DURATION_IN_BLOCKS as Balance)
+				.ok_or(MarketError::ArithmeticError)?;
+			let current_bit_index = current_bit_index_scaled
+				.checked_div(PRECISION)
+				.ok_or(MarketError::ArithmeticError)?;
 
-			scaled_price.checked_div(PRECISION).ok_or(MarketError::ArithmeticError)
+			let price = listing.region.mask.count_ones_from(current_bit_index as usize) as Balance *
+				listing.bit_price;
+
+			Ok(price)
 		}
 
 		fn emit_event<Event: Into<<CoretimeMarket as ContractEventBase>::Type>>(&self, e: Event) {

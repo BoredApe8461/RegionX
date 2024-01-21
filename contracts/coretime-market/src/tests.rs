@@ -28,7 +28,7 @@ fn calculate_region_price_works() {
 				listed_at: Moment { block_number: 0, timeslice: 0 }
 			}
 		),
-		Ok(400) // 80 * 5
+		Ok(400) // 80 bits * 5
 	);
 
 	// 40 active bits
@@ -44,7 +44,7 @@ fn calculate_region_price_works() {
 				listed_at: Moment { block_number: 0, timeslice: 0 }
 			}
 		),
-		Ok(200) // 40 * 5
+		Ok(200) // 40 bits * 5
 	);
 
 	// Works for regions which started.
@@ -77,6 +77,47 @@ fn calculate_region_price_works() {
 			}
 		),
 		Ok(200)
+	);
+
+	// Timeline:
+	//
+	// 0 -- 2 --------6--------- 10
+	// |    |         |           |
+	// |    |         |           +-- Region end
+	// |    |         +-------------- Active bits start from here
+	// |    +------------------------ Region begin
+	// +----------------------------- Timeslice 0
+	//
+	// 40 active bits out of which half is wasted.
+	assert_eq!(
+		CoretimeMarket::calculate_region_price(
+			timeslice_to_block_number(8), // current block number
+			Listing {
+				seller: charlie,
+				region: Region { begin: 2, end: 10, core: 0, mask: CoreMask::from_chunk(40, 80) },
+				bit_price: 5,
+				sale_recipient: charlie,
+				metadata_version: 0,
+				listed_at: Moment { block_number: 0, timeslice: 0 }
+			}
+		),
+		Ok(100)
+	);
+
+	// Expired region has no value:
+	assert_eq!(
+		CoretimeMarket::calculate_region_price(
+			timeslice_to_block_number(10), // current block number
+			Listing {
+				seller: charlie,
+				region: Region { begin: 2, end: 10, core: 0, mask: CoreMask::from_chunk(40, 80) },
+				bit_price: 5,
+				sale_recipient: charlie,
+				metadata_version: 0,
+				listed_at: Moment { block_number: 0, timeslice: 0 }
+			}
+		),
+		Ok(0)
 	);
 }
 

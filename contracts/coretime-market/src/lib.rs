@@ -307,8 +307,9 @@ pub mod coretime_market {
 				.into_inner()
 				.saturating_div(FixedU128::accuracy());
 
-			let price = listing.region.mask.count_ones_from(current_bit_index as usize) as Balance *
-				listing.bit_price;
+			let price = listing.bit_price.saturating_mul(
+				listing.region.mask.count_ones_from(current_bit_index as usize) as Balance,
+			);
 
 			Ok(price)
 		}

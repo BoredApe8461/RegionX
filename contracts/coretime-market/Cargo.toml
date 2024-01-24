@@ -32,6 +32,7 @@ std = [
     "primitives/std",
     "scale/std",
     "scale-info/std",
+    "sp-arithmetic/std",
     "environment/ink-std",
     "openbrush/std",
     "xc-regions/std",

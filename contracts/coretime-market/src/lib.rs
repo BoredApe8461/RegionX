@@ -51,9 +51,8 @@ pub mod coretime_market {
 		coretime::{RawRegionId, Timeslice, TIMESLICE_DURATION_IN_BLOCKS},
 		ensure, Version,
 	};
+	use sp_arithmetic::{FixedPointNumber, FixedU128};
 	use xc_regions::{traits::RegionMetadataRef, PSP34Ref};
-
-	const PRECISION: Balance = 100;
 
 	#[ink(storage)]
 	#[derive(Storage)]
@@ -296,20 +295,17 @@ pub mod coretime_market {
 			}
 
 			// Ok to use saturating since `region.end` is always greater than `region.begin` anyway.
-			let duration = listing.region.end.saturating_sub(listing.region.begin) as Balance;
-			let wasted_timeslices =
-				current_timeslice.saturating_sub(listing.region.begin) as Balance;
+			let duration = listing.region.end.saturating_sub(listing.region.begin);
+			let wasted_timeslices = current_timeslice.saturating_sub(listing.region.begin);
 
-			let scaled_wasted =
-				wasted_timeslices.checked_mul(PRECISION).ok_or(MarketError::ArithmeticError)?;
-			let wasted = scaled_wasted.checked_div(duration).ok_or(MarketError::ArithmeticError)?;
+			let wasted_ratio = FixedU128::checked_from_rational(wasted_timeslices, duration)
+				.ok_or(MarketError::ArithmeticError)?;
 
-			let current_bit_index_scaled = wasted
-				.checked_mul(TIMESLICE_DURATION_IN_BLOCKS as Balance)
-				.ok_or(MarketError::ArithmeticError)?;
-			let current_bit_index = current_bit_index_scaled
-				.checked_div(PRECISION)
-				.ok_or(MarketError::ArithmeticError)?;
+			let current_bit_index = wasted_ratio
+				.const_checked_mul(FixedU128::from_u32(TIMESLICE_DURATION_IN_BLOCKS))
+				.ok_or(MarketError::ArithmeticError)?
+				.into_inner()
+				.saturating_div(FixedU128::accuracy());
 
 			let price = listing.region.mask.count_ones_from(current_bit_index as usize) as Balance *
 				listing.bit_price;
@@ -324,9 +320,7 @@ pub mod coretime_market {
 			let elapsed_blocks = current_block_number.saturating_sub(reference.block_number);
 			let elapsed_timeslices = elapsed_blocks.saturating_div(TIMESLICE_DURATION_IN_BLOCKS);
 
-			let current_timeslice = reference.timeslice.saturating_add(elapsed_timeslices);
-
-			current_timeslice
+			reference.timeslice.saturating_add(elapsed_timeslices)
 		}
 
 		fn emit_event<Event: Into<<CoretimeMarket as ContractEventBase>::Type>>(&self, e: Event) {

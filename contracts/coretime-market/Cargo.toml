@@ -10,6 +10,7 @@ ink = { version = "4.2.1", default-features = false }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2.6", default-features = false, features = ["derive"], optional = true }
+sp-arithmetic = { version = "23.0.0", default-features = false }
 
 # OpenBrush dependency
 openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = "develop", default-features = false, features=["psp34"] }

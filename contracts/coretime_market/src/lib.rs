@@ -64,7 +64,8 @@ pub mod coretime_market {
 		/// The `AccountId` of the xc-regions contract.
 		pub xc_regions_contract: AccountId,
 		/// The deposit required to list a region on sale.
-		// Set on contract initialization. Can't be changed afterwards.
+		///
+		/// Set on contract initialization. Can't be changed afterwards.
 		pub listing_deposit: Balance,
 	}
 

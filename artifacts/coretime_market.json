@@ -1,0 +1,1429 @@
+{
+  "source": {
+    "hash": "0x4f90e00d66bdc999546d9aef884e421e40a2a4328ba4059b8b57b5868e7ab6c6",
+    "language": "ink! 4.3.0",
+    "compiler": "rustc 1.76.0-nightly",
+    "build_info": {
+      "build_mode": "Debug",
+      "cargo_contract_version": "3.2.0",
+      "rust_toolchain": "nightly-aarch64-apple-darwin",
+      "wasm_opt_settings": {
+        "keep_debug_symbols": false,
+        "optimization_passes": "Z"
+      }
+    }
+  },
+  "contract": {
+    "name": "coretime_market",
+    "version": "0.1.0",
+    "authors": [
+      "RegionX <support@regionx.tech>"
+    ],
+    "description": "Secondary Coretime marketpalce contract."
+  },
+  "spec": {
+    "constructors": [
+      {
+        "args": [
+          {
+            "label": "xc_regions_contract",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "label": "listing_deposit",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 5
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "new",
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink_primitives",
+            "ConstructorResult"
+          ],
+          "type": 7
+        },
+        "selector": "0x9bae9d5e"
+      }
+    ],
+    "docs": [],
+    "environment": {
+      "accountId": {
+        "displayName": [
+          "AccountId"
+        ],
+        "type": 0
+      },
+      "balance": {
+        "displayName": [
+          "Balance"
+        ],
+        "type": 5
+      },
+      "blockNumber": {
+        "displayName": [
+          "BlockNumber"
+        ],
+        "type": 3
+      },
+      "chainExtension": {
+        "displayName": [
+          "ChainExtension"
+        ],
+        "type": 25
+      },
+      "hash": {
+        "displayName": [
+          "Hash"
+        ],
+        "type": 24
+      },
+      "maxEventTopics": 4,
+      "timestamp": {
+        "displayName": [
+          "Timestamp"
+        ],
+        "type": 13
+      }
+    },
+    "events": [
+      {
+        "args": [
+          {
+            "docs": [
+              " The identifier of the region that got listed on sale."
+            ],
+            "indexed": true,
+            "label": "id",
+            "type": {
+              "displayName": [
+                "Id"
+              ],
+              "type": 12
+            }
+          },
+          {
+            "docs": [
+              " The bit price of the listed region."
+            ],
+            "indexed": false,
+            "label": "bit_price",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 5
+            }
+          },
+          {
+            "docs": [
+              " The seller of the region"
+            ],
+            "indexed": false,
+            "label": "seller",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "docs": [
+              " The sale revenue recipient."
+            ],
+            "indexed": false,
+            "label": "sale_recipient",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "docs": [
+              " The metadata version of the region."
+            ],
+            "indexed": false,
+            "label": "metadata_version",
+            "type": {
+              "displayName": [
+                "Version"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "docs": [],
+        "label": "RegionListed"
+      },
+      {
+        "args": [
+          {
+            "docs": [
+              " The identifier of the region that got listed on sale."
+            ],
+            "indexed": true,
+            "label": "id",
+            "type": {
+              "displayName": [
+                "Id"
+              ],
+              "type": 12
+            }
+          },
+          {
+            "docs": [
+              " The buyer of the region"
+            ],
+            "indexed": false,
+            "label": "buyer",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "docs": [
+              " The total price paid for the listed region."
+            ],
+            "indexed": false,
+            "label": "total_price",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 5
+            }
+          }
+        ],
+        "docs": [],
+        "label": "RegionPurchased"
+      }
+    ],
+    "lang_error": {
+      "displayName": [
+        "ink",
+        "LangError"
+      ],
+      "type": 9
+    },
+    "messages": [
+      {
+        "args": [],
+        "default": false,
+        "docs": [],
+        "label": "xc_regions_contract",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 10
+        },
+        "selector": "0xa4edc593"
+      },
+      {
+        "args": [],
+        "default": false,
+        "docs": [],
+        "label": "listed_regions",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 11
+        },
+        "selector": "0xa2cf234e"
+      },
+      {
+        "args": [
+          {
+            "label": "id",
+            "type": {
+              "displayName": [
+                "Id"
+              ],
+              "type": 12
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "region_price",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 15
+        },
+        "selector": "0x6f91fe12"
+      },
+      {
+        "args": [
+          {
+            "label": "id",
+            "type": {
+              "displayName": [
+                "Id"
+              ],
+              "type": 12
+            }
+          },
+          {
+            "label": "bit_price",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 5
+            }
+          },
+          {
+            "label": "sale_recipient",
+            "type": {
+              "displayName": [
+                "Option"
+              ],
+              "type": 21
+            }
+          },
+          {
+            "label": "current_timeslice",
+            "type": {
+              "displayName": [
+                "Timeslice"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "label": "current_timeslice_start",
+            "type": {
+              "displayName": [
+                "BlockNumber"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " A function for listing a region on sale.",
+          "",
+          " ## Arguments:",
+          " - `region_id`: The `u128` encoded identifier of the region that the caller intends to",
+          "   list for sale.",
+          " - `bit_price`: The price for the smallest unit of the region. This is the price for a",
+          "   single bit of the region's coremask, i.e., 1/80th of the total price.",
+          " - `sale_recipient`: The `AccountId` receiving the payment from the sale. If not",
+          "   specified this will be the caller.",
+          " - `current_timeslice`: The current timeslice. Used for determining the current timeslice",
+          "   at the moment when someone purchases this region.",
+          " - `current_timeslice_start`: The block number when the current timeslice started. Used",
+          "   for determining the region price.",
+          "",
+          " NOTE: The contract can't verify the correctness of `current_timeslice` and",
+          " `current_timeslice_start`. These two values are used to determine  the region's price.",
+          " While users can manipulate this data, there is no incentive to do so. If set to a",
+          " greater value, the price of the region will drop more quickly, as the contract will",
+          " assume more of the listed region's resources were wasted. Conversely, if the timeslice",
+          " is set to a smaller value, the price of the region will decrease more slowly,",
+          " potentially resulting in reduced buyer interest.",
+          "",
+          " Before making this call, the caller must first approve their region to the market",
+          " contract, as it will be transferred to the contract when listed for sale.",
+          "",
+          " This call is payable because listing a region requires a deposit from the user. This",
+          " deposit will be returned upon unlisting the region from sale. The rationale behind this",
+          " requirement is to prevent the contract state from becoming bloated with regions that",
+          " have expired."
+        ],
+        "label": "list_region",
+        "mutates": true,
+        "payable": true,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 22
+        },
+        "selector": "0xad229eb3"
+      },
+      {
+        "args": [
+          {
+            "label": "_region_id",
+            "type": {
+              "displayName": [
+                "RawRegionId"
+              ],
+              "type": 5
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " A function for unlisting a region on sale.",
+          "",
+          " ## Arguments:",
+          " - `region_id`: The `u128` encoded identifier of the region that the caller intends to",
+          "   unlist from sale."
+        ],
+        "label": "unlist_region",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 22
+        },
+        "selector": "0x2cda3dc9"
+      },
+      {
+        "args": [
+          {
+            "label": "_region_id",
+            "type": {
+              "displayName": [
+                "RawRegionId"
+              ],
+              "type": 5
+            }
+          },
+          {
+            "label": "_new_bit_price",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 5
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " A function for updating a listed region's bit price.",
+          "",
+          " ## Arguments:",
+          " - `region_id`: The `u128` encoded identifier of the region being listed for sale.",
+          " - `bit_price`: The new price for the smallest unit of the region. This is the price for",
+          "   a single bit of the region's coremask, i.e., 1/80th of the total price."
+        ],
+        "label": "update_region_price",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 22
+        },
+        "selector": "0x90fd261d"
+      },
+      {
+        "args": [
+          {
+            "label": "id",
+            "type": {
+              "displayName": [
+                "Id"
+              ],
+              "type": 12
+            }
+          },
+          {
+            "label": "metadata_version",
+            "type": {
+              "displayName": [
+                "Version"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " A function for purchasing a region listed on sale.",
+          "",
+          " ## Arguments:",
+          " - `region_id`: The `u128` encoded identifier of the region being listed for sale.",
+          " - `metadata_version`: The required metadata version for the region. If the",
+          "   `metadata_version` does not match the current version stored in the xc-regions",
+          "   contract the purchase will fail.",
+          "",
+          " IMPORTANT NOTE: The client is responsible for ensuring that the metadata of the listed",
+          " region is correct."
+        ],
+        "label": "purchase_region",
+        "mutates": true,
+        "payable": true,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 22
+        },
+        "selector": "0xa2f9e3b0"
+      }
+    ]
+  },
+  "storage": {
+    "root": {
+      "layout": {
+        "struct": {
+          "fields": [
+            {
+              "layout": {
+                "root": {
+                  "layout": {
+                    "struct": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x17f3ca29",
+                              "ty": 0
+                            }
+                          },
+                          "name": "seller"
+                        },
+                        {
+                          "layout": {
+                            "struct": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x17f3ca29",
+                                      "ty": 3
+                                    }
+                                  },
+                                  "name": "begin"
+                                },
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x17f3ca29",
+                                      "ty": 3
+                                    }
+                                  },
+                                  "name": "end"
+                                },
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x17f3ca29",
+                                      "ty": 4
+                                    }
+                                  },
+                                  "name": "core"
+                                },
+                                {
+                                  "layout": {
+                                    "struct": {
+                                      "fields": [
+                                        {
+                                          "layout": {
+                                            "array": {
+                                              "layout": {
+                                                "leaf": {
+                                                  "key": "0x17f3ca29",
+                                                  "ty": 2
+                                                }
+                                              },
+                                              "len": 10,
+                                              "offset": "0x17f3ca29"
+                                            }
+                                          },
+                                          "name": "0"
+                                        }
+                                      ],
+                                      "name": "CoreMask"
+                                    }
+                                  },
+                                  "name": "mask"
+                                }
+                              ],
+                              "name": "Region"
+                            }
+                          },
+                          "name": "region"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x17f3ca29",
+                              "ty": 5
+                            }
+                          },
+                          "name": "bit_price"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x17f3ca29",
+                              "ty": 0
+                            }
+                          },
+                          "name": "sale_recipient"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x17f3ca29",
+                              "ty": 3
+                            }
+                          },
+                          "name": "metadata_version"
+                        },
+                        {
+                          "layout": {
+                            "struct": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x17f3ca29",
+                                      "ty": 3
+                                    }
+                                  },
+                                  "name": "block_number"
+                                },
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x17f3ca29",
+                                      "ty": 3
+                                    }
+                                  },
+                                  "name": "claimed_timeslice"
+                                },
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x17f3ca29",
+                                      "ty": 3
+                                    }
+                                  },
+                                  "name": "claimed_timeslice_start"
+                                }
+                              ],
+                              "name": "ReferencePoint"
+                            }
+                          },
+                          "name": "listed_at"
+                        }
+                      ],
+                      "name": "Listing"
+                    }
+                  },
+                  "root_key": "0x17f3ca29"
+                }
+              },
+              "name": "listings"
+            },
+            {
+              "layout": {
+                "leaf": {
+                  "key": "0x00000000",
+                  "ty": 6
+                }
+              },
+              "name": "listed_regions"
+            },
+            {
+              "layout": {
+                "leaf": {
+                  "key": "0x00000000",
+                  "ty": 0
+                }
+              },
+              "name": "xc_regions_contract"
+            },
+            {
+              "layout": {
+                "leaf": {
+                  "key": "0x00000000",
+                  "ty": 5
+                }
+              },
+              "name": "listing_deposit"
+            }
+          ],
+          "name": "CoretimeMarket"
+        }
+      },
+      "root_key": "0x00000000"
+    }
+  },
+  "types": [
+    {
+      "id": 0,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 1,
+                "typeName": "[u8; 32]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "types",
+          "AccountId"
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "type": {
+        "def": {
+          "array": {
+            "len": 32,
+            "type": 2
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": {
+        "def": {
+          "primitive": "u8"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": {
+        "def": {
+          "primitive": "u32"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": {
+        "def": {
+          "primitive": "u16"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": {
+        "def": {
+          "primitive": "u128"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": {
+        "def": {
+          "sequence": {
+            "type": 5
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 8
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 9
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 8
+          },
+          {
+            "name": "E",
+            "type": 9
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "type": {
+        "def": {
+          "tuple": []
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 1,
+                "name": "CouldNotReadInput"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "LangError"
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 0
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 9
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 0
+          },
+          {
+            "name": "E",
+            "type": 9
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 6
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 9
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 6
+          },
+          {
+            "name": "E",
+            "type": 9
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 2,
+                    "typeName": "u8"
+                  }
+                ],
+                "index": 0,
+                "name": "U8"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 4,
+                    "typeName": "u16"
+                  }
+                ],
+                "index": 1,
+                "name": "U16"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 3,
+                    "typeName": "u32"
+                  }
+                ],
+                "index": 2,
+                "name": "U32"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 13,
+                    "typeName": "u64"
+                  }
+                ],
+                "index": 3,
+                "name": "U64"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 5,
+                    "typeName": "u128"
+                  }
+                ],
+                "index": 4,
+                "name": "U128"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 14,
+                    "typeName": "Vec<u8>"
+                  }
+                ],
+                "index": 5,
+                "name": "Bytes"
+              }
+            ]
+          }
+        },
+        "path": [
+          "openbrush_contracts",
+          "traits",
+          "types",
+          "Id"
+        ]
+      }
+    },
+    {
+      "id": 13,
+      "type": {
+        "def": {
+          "primitive": "u64"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": {
+        "def": {
+          "sequence": {
+            "type": 2
+          }
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 16
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 9
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 16
+          },
+          {
+            "name": "E",
+            "type": 9
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 16,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 5
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 17
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 5
+          },
+          {
+            "name": "E",
+            "type": 17
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 17,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "ArithmeticError"
+              },
+              {
+                "index": 1,
+                "name": "InvalidRegionId"
+              },
+              {
+                "index": 2,
+                "name": "InvalidTimeslice"
+              },
+              {
+                "index": 3,
+                "name": "RegionExpired"
+              },
+              {
+                "index": 4,
+                "name": "MissingDeposit"
+              },
+              {
+                "index": 5,
+                "name": "RegionNotListed"
+              },
+              {
+                "index": 6,
+                "name": "InsufficientFunds"
+              },
+              {
+                "index": 7,
+                "name": "MetadataNotMatching"
+              },
+              {
+                "index": 8,
+                "name": "TransferFailed"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 18,
+                    "typeName": "PSP34Error"
+                  }
+                ],
+                "index": 9,
+                "name": "XcRegionsPsp34Error"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 20,
+                    "typeName": "XcRegionsError"
+                  }
+                ],
+                "index": 10,
+                "name": "XcRegionsMetadataError"
+              }
+            ]
+          }
+        },
+        "path": [
+          "coretime_market",
+          "types",
+          "MarketError"
+        ]
+      }
+    },
+    {
+      "id": 18,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 19,
+                    "typeName": "String"
+                  }
+                ],
+                "index": 0,
+                "name": "Custom"
+              },
+              {
+                "index": 1,
+                "name": "SelfApprove"
+              },
+              {
+                "index": 2,
+                "name": "NotApproved"
+              },
+              {
+                "index": 3,
+                "name": "TokenExists"
+              },
+              {
+                "index": 4,
+                "name": "TokenNotExists"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 19,
+                    "typeName": "String"
+                  }
+                ],
+                "index": 5,
+                "name": "SafeTransferCheckFailed"
+              }
+            ]
+          }
+        },
+        "path": [
+          "openbrush_contracts",
+          "traits",
+          "errors",
+          "psp34",
+          "PSP34Error"
+        ]
+      }
+    },
+    {
+      "id": 19,
+      "type": {
+        "def": {
+          "primitive": "str"
+        }
+      }
+    },
+    {
+      "id": 20,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "CannotInitialize"
+              },
+              {
+                "index": 1,
+                "name": "CannotRemove"
+              },
+              {
+                "index": 2,
+                "name": "MetadataNotFound"
+              },
+              {
+                "index": 3,
+                "name": "InvalidMetadata"
+              },
+              {
+                "index": 4,
+                "name": "VersionNotFound"
+              },
+              {
+                "index": 5,
+                "name": "RuntimeError"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 18,
+                    "typeName": "PSP34Error"
+                  }
+                ],
+                "index": 6,
+                "name": "Psp34"
+              }
+            ]
+          }
+        },
+        "path": [
+          "xc_regions",
+          "types",
+          "XcRegionsError"
+        ]
+      }
+    },
+    {
+      "id": 21,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "None"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 0
+                  }
+                ],
+                "index": 1,
+                "name": "Some"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 0
+          }
+        ],
+        "path": [
+          "Option"
+        ]
+      }
+    },
+    {
+      "id": 22,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 23
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 9
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 23
+          },
+          {
+            "name": "E",
+            "type": 9
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 23,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 8
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 17
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 8
+          },
+          {
+            "name": "E",
+            "type": 17
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 24,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 1,
+                "typeName": "[u8; 32]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "types",
+          "Hash"
+        ]
+      }
+    },
+    {
+      "id": 25,
+      "type": {
+        "def": {
+          "composite": {}
+        },
+        "path": [
+          "extension",
+          "Extension"
+        ]
+      }
+    }
+  ],
+  "version": "4"
+}

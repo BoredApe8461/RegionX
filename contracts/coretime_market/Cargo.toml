@@ -1,5 +1,5 @@
 [package]
-name = "coretime-market"
+name = "coretime_market"
 authors = ["RegionX <support@regionx.tech>"]
 version = "0.1.0"
 description = "Secondary Coretime marketpalce contract."
@@ -17,7 +17,7 @@ openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = 
 
 environment = { path = "../../environment", default-features = false, features = ["ink"] }
 primitives = { path = "../../primitives", default-features = false  }
-xc-regions = { path = "../xc-regions", default-features = false, features = ["ink-as-dependency"] }
+xc_regions = { path = "../xc_regions", default-features = false, features = ["ink-as-dependency"] }
 
 [dev-dependencies]
 ink_e2e = "4.2.1"
@@ -35,7 +35,10 @@ std = [
     "sp-arithmetic/std",
     "environment/ink-std",
     "openbrush/std",
-    "xc-regions/std",
+    "xc_regions/std",
 ]
 ink-as-dependency = []
 e2e-tests = []
+
+[profile.release]
+overflow-checks = false 

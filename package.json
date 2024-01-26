@@ -1,0 +1,37 @@
+{
+  "name": "regionx",
+  "version": "1.0.0",
+  "description": "Coretime marketplace & tooling",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "mocha --require ts-node/register --recursive ./tests --extension \".test.ts\" --exit --timeout 2000000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RegionX-Labs/RegionX.git"
+  },
+  "keywords": [
+    "coretime"
+  ],
+  "author": "Master Union",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/RegionX-Labs/RegionX/issues"
+  },
+  "homepage": "https://github.com/RegionX-Labs/RegionX#readme",
+  "dependencies": {
+    "chai": "^4.4.1",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^10.2.0",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.11",
+    "@types/chai-as-promised": "^7.1.8",
+    "@types/jest": "^29.5.11",
+    "@types/mocha": "^10.0.6"
+  }
+}

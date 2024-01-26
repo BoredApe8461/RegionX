@@ -156,6 +156,29 @@ fn calculate_region_price_works() {
 		),
 		Ok(0)
 	);
+
+	// `listed_at` affects the price.
+	//
+	// NOTE: This is not a realistic scenario since the provided current block number is less than
+	// `listed_at`.
+	assert_eq!(
+		CoretimeMarket::calculate_region_price(
+			timeslice_to_block_number(4), // current block number
+			Listing {
+				seller: charlie,
+				region: Region { begin: 2, end: 10, core: 0, mask: CoreMask::complete() },
+				bit_price: 5,
+				sale_recipient: charlie,
+				metadata_version: 0,
+				listed_at: ReferencePoint {
+					block_number: 0,
+					claimed_timeslice: 6,
+					claimed_timeslice_start: timeslice_to_block_number(6)
+				}
+			}
+		),
+		Ok(200) // 1/2 wasted.
+	);
 }
 
 fn timeslice_to_block_number(timeslice: Timeslice) -> BlockNumber {

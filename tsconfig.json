@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
+        "types": ["mocha", "node"]
+    },
+    "include": [
+        "tests/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules/"
+    ]
+}

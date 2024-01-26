@@ -120,7 +120,7 @@ fn init_works() {
 
 #[ink::test]
 fn remove_works() {
-	let DefaultAccounts::<DefaultEnvironment> { charlie, .. } = get_default_accounts();
+	let DefaultAccounts::<DefaultEnvironment> { bob, charlie, .. } = get_default_accounts();
 	let mut xc_regions = XcRegions::new();
 	set_caller::<DefaultEnvironment>(charlie);
 
@@ -143,6 +143,11 @@ fn remove_works() {
 	assert_eq!(xc_regions.regions.get(0), Some(Region::default()));
 	assert_eq!(xc_regions.metadata_versions.get(0), Some(0));
 
+	// Only charlie can remove the region:
+	set_caller::<DefaultEnvironment>(bob);
+	assert_eq!(xc_regions.remove(0), Err(XcRegionsError::CannotRemove));
+
+	set_caller::<DefaultEnvironment>(charlie);
 	// Removing a region works:
 	assert_ok!(xc_regions.remove(0));
 

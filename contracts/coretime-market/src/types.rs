@@ -30,6 +30,8 @@ pub enum MarketError {
 	ArithmeticError,
 	/// The provided identifier is not a valid region id.
 	InvalidRegionId,
+	/// The caller tried to provide invalid timeslice information.
+	InvalidTimeslice,
 	/// The specified region is expired.
 	RegionExpired,
 	/// The caller made the call without sending the required deposit amount.
@@ -53,6 +55,7 @@ impl core::fmt::Display for MarketError {
 		match self {
 			MarketError::ArithmeticError => write!(f, "ArithmeticError"),
 			MarketError::InvalidRegionId => write!(f, "InvalidRegionId"),
+			MarketError::InvalidTimeslice => write!(f, "InvalidTimeslice"),
 			MarketError::RegionExpired => write!(f, "RegionExpired"),
 			MarketError::MissingDeposit => write!(f, "MissingDeposit"),
 			MarketError::RegionNotListed => write!(f, "RegionNotListed"),
@@ -67,9 +70,16 @@ impl core::fmt::Display for MarketError {
 
 #[derive(scale::Decode, scale::Encode, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
-pub struct Moment {
+pub struct ReferencePoint {
 	pub block_number: BlockNumber,
-	pub timeslice: Timeslice,
+	/// The timeslice when the user claims to list their region on sale.
+	///
+	/// This is user provided information and is not guaranteed to be correct.
+	pub claimed_timeslice: Timeslice,
+	/// The block number when the `claimed_timeslice` started.
+	///
+	/// This is user provided information and is not guaranteed to be correct.
+	pub claimed_timeslice_start: BlockNumber,
 }
 
 #[derive(scale::Decode, scale::Encode, Clone, Debug, PartialEq, Eq)]
@@ -88,5 +98,5 @@ pub struct Listing {
 	/// The metadata version of the region listed on sale. Used to prevent front running attacks.
 	pub metadata_version: Version,
 	/// The timeslice when the region was listed on sale.
-	pub listed_at: Moment,
+	pub listed_at: ReferencePoint,
 }

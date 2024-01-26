@@ -38,7 +38,7 @@ mod types;
 
 #[openbrush::contract(env = environment::ExtendedEnvironment)]
 pub mod coretime_market {
-	use crate::types::{Listing, MarketError, Moment};
+	use crate::types::{Listing, MarketError, ReferencePoint};
 	use environment::ExtendedEnvironment;
 	use ink::{
 		codegen::{EmitEvent, Env},
@@ -132,7 +132,18 @@ pub mod coretime_market {
 		///   single bit of the region's coremask, i.e., 1/80th of the total price.
 		/// - `sale_recipient`: The `AccountId` receiving the payment from the sale. If not
 		///   specified this will be the caller.
-		/// - `current_timeslice`: The current timeslice. NOTE: this can't be deterministic.
+		/// - `current_timeslice`: The current timeslice. Used for determining the current timeslice
+		///   at the moment when someone purchases this region.
+		/// - `current_timeslice_start`: The block number when the current timeslice started. Used
+		///   for determining the region price.
+		///
+		/// NOTE: The contract can't verify the correctness of `current_timeslice` and
+		/// `current_timeslice_start`. These two values are used to determine  the region's price.
+		/// While users can manipulate this data, there is no incentive to do so. If set to a
+		/// greater value, the price of the region will drop more quickly, as the contract will
+		/// assume more of the listed region's resources were wasted. Conversely, if the timeslice
+		/// is set to a smaller value, the price of the region will decrease more slowly,
+		/// potentially resulting in reduced buyer interest.
 		///
 		/// Before making this call, the caller must first approve their region to the market
 		/// contract, as it will be transferred to the contract when listed for sale.
@@ -148,11 +159,15 @@ pub mod coretime_market {
 			bit_price: Balance,
 			sale_recipient: Option<AccountId>,
 			current_timeslice: Timeslice,
+			current_timeslice_start: BlockNumber,
 		) -> Result<(), MarketError> {
 			let caller = self.env().caller();
 			let market = self.env().account_id();
+			let now = self.env().block_number();
 
 			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
+
+			ensure!(current_timeslice_start < now, MarketError::InvalidTimeslice);
 
 			// Ensure that the region exists and its metadata is set.
 			let metadata = RegionMetadataRef::get_metadata(&self.xc_regions_contract, region_id)
@@ -180,10 +195,10 @@ pub mod coretime_market {
 					bit_price,
 					sale_recipient,
 					metadata_version: metadata.version,
-					listed_at: Moment {
-						// TODO: doesn't make sense to put the current block number.
-						block_number: self.env().block_number(),
-						timeslice: current_timeslice,
+					listed_at: ReferencePoint {
+						block_number: now,
+						claimed_timeslice: current_timeslice,
+						claimed_timeslice_start: current_timeslice_start,
 					},
 				},
 			);
@@ -232,6 +247,9 @@ pub mod coretime_market {
 		/// - `metadata_version`: The required metadata version for the region. If the
 		///   `metadata_version` does not match the current version stored in the xc-regions
 		///   contract the purchase will fail.
+		///
+		/// IMPORTANT NOTE: The client is responsible for ensuring that the metadata of the listed
+		/// region is correct.
 		#[ink(message, payable)]
 		pub fn purchase_region(
 			&mut self,
@@ -316,12 +334,13 @@ pub mod coretime_market {
 
 		pub(crate) fn current_timeslice(
 			current_block_number: BlockNumber,
-			reference: Moment,
+			reference: ReferencePoint,
 		) -> Timeslice {
-			let elapsed_blocks = current_block_number.saturating_sub(reference.block_number);
+			let elapsed_blocks =
+				current_block_number.saturating_sub(reference.claimed_timeslice_start);
 			let elapsed_timeslices = elapsed_blocks.saturating_div(TIMESLICE_DURATION_IN_BLOCKS);
 
-			reference.timeslice.saturating_add(elapsed_timeslices)
+			reference.claimed_timeslice.saturating_add(elapsed_timeslices)
 		}
 
 		fn emit_event<Event: Into<<CoretimeMarket as ContractEventBase>::Type>>(&self, e: Event) {

@@ -1,6 +1,6 @@
 use crate::{
 	coretime_market::CoretimeMarket,
-	types::{Listing, Moment},
+	types::{Listing, ReferencePoint},
 };
 use ink::env::{
 	test::{default_accounts, set_caller, DefaultAccounts},
@@ -11,11 +11,13 @@ use primitives::coretime::{CoreMask, Region, Timeslice, TIMESLICE_DURATION_IN_BL
 
 #[test]
 fn current_timeslice_works() {
-	let reference = Moment { block_number: 0, timeslice: 0 };
+	let reference =
+		ReferencePoint { block_number: 0, claimed_timeslice: 0, claimed_timeslice_start: 0 };
 	assert_eq!(CoretimeMarket::current_timeslice(0, reference.clone()), 0);
 	assert_eq!(CoretimeMarket::current_timeslice(timeslice_to_block_number(5), reference), 5);
 
-	let reference = Moment { block_number: 80, timeslice: 1 };
+	let reference =
+		ReferencePoint { block_number: 80, claimed_timeslice: 0, claimed_timeslice_start: 0 };
 	assert_eq!(CoretimeMarket::current_timeslice(80, reference.clone()), 1);
 	assert_eq!(CoretimeMarket::current_timeslice(timeslice_to_block_number(42), reference), 42);
 }
@@ -36,7 +38,11 @@ fn calculate_region_price_works() {
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
-				listed_at: Moment { block_number: 0, timeslice: 0 }
+				listed_at: ReferencePoint {
+					block_number: 0,
+					claimed_timeslice: 0,
+					claimed_timeslice_start: 0
+				}
 			}
 		),
 		Ok(400) // 80 bits * 5
@@ -52,7 +58,11 @@ fn calculate_region_price_works() {
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
-				listed_at: Moment { block_number: 0, timeslice: 0 }
+				listed_at: ReferencePoint {
+					block_number: 0,
+					claimed_timeslice: 0,
+					claimed_timeslice_start: 0
+				}
 			}
 		),
 		Ok(200) // 40 bits * 5
@@ -68,7 +78,11 @@ fn calculate_region_price_works() {
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
-				listed_at: Moment { block_number: 0, timeslice: 0 }
+				listed_at: ReferencePoint {
+					block_number: 0,
+					claimed_timeslice: 0,
+					claimed_timeslice_start: 0
+				}
 			}
 		),
 		Ok(300) // 1/4th of the region is wasted, so the price is decreased proportionally.
@@ -84,7 +98,11 @@ fn calculate_region_price_works() {
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
-				listed_at: Moment { block_number: 0, timeslice: 0 }
+				listed_at: ReferencePoint {
+					block_number: 0,
+					claimed_timeslice: 0,
+					claimed_timeslice_start: 0
+				}
 			}
 		),
 		Ok(200)
@@ -109,7 +127,11 @@ fn calculate_region_price_works() {
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
-				listed_at: Moment { block_number: 0, timeslice: 0 }
+				listed_at: ReferencePoint {
+					block_number: 0,
+					claimed_timeslice: 0,
+					claimed_timeslice_start: 0
+				}
 			}
 		),
 		Ok(100)
@@ -125,7 +147,11 @@ fn calculate_region_price_works() {
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
-				listed_at: Moment { block_number: 0, timeslice: 0 }
+				listed_at: ReferencePoint {
+					block_number: 0,
+					claimed_timeslice: 0,
+					claimed_timeslice_start: 0
+				}
 			}
 		),
 		Ok(0)

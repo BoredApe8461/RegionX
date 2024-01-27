@@ -1,12 +1,13 @@
 import type * as EventTypes from '../event-types/xc_regions';
 import type {ContractPromise} from "@polkadot/api-contract";
 import type {ApiPromise} from "@polkadot/api";
+import EVENT_DATA_TYPE_DESCRIPTIONS from '../event-data/xc_regions.json';
 import {getEventTypeDescription} from "../shared/utils";
 import {handleEventReturn} from "@727-ventures/typechain-types";
 
 export default class EventsClass {
-	private __nativeContract : ContractPromise;
-	private __api : ApiPromise;
+	readonly __nativeContract : ContractPromise;
+	readonly __api : ApiPromise;
 
 	constructor(
 		nativeContract : ContractPromise,
@@ -24,7 +25,7 @@ export default class EventsClass {
 				_event[event.args[i]!.name] = args[i]!.toJSON();
 			}
 
-			callback(handleEventReturn(_event, getEventTypeDescription('RegionInitialized', 'xc_regions')) as EventTypes.RegionInitialized);
+			callback(handleEventReturn(_event, getEventTypeDescription('RegionInitialized', EVENT_DATA_TYPE_DESCRIPTIONS)) as EventTypes.RegionInitialized);
 		};
 
 		return this.__subscribeOnEvent(callbackWrapper, (eventName : string) => eventName == 'RegionInitialized');
@@ -38,7 +39,7 @@ export default class EventsClass {
 				_event[event.args[i]!.name] = args[i]!.toJSON();
 			}
 
-			callback(handleEventReturn(_event, getEventTypeDescription('RegionRemoved', 'xc_regions')) as EventTypes.RegionRemoved);
+			callback(handleEventReturn(_event, getEventTypeDescription('RegionRemoved', EVENT_DATA_TYPE_DESCRIPTIONS)) as EventTypes.RegionRemoved);
 		};
 
 		return this.__subscribeOnEvent(callbackWrapper, (eventName : string) => eventName == 'RegionRemoved');

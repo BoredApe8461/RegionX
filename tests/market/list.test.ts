@@ -6,15 +6,15 @@ import Market_Factory from '../../types/constructors/coretime_market';
 import XcRegions from '../../types/contracts/xc_regions';
 import Market from '../../types/contracts/coretime_market';
 import chaiAsPromised from 'chai-as-promised';
-import { CoreMask, Region, RegionId, RegionRecord } from 'coretime-utils';
+import { CoreMask, Id, Region, RegionId, RegionRecord } from 'coretime-utils';
 
 use(chaiAsPromised);
 
 const REGION_COLLECTION_ID = 42;
 
-const wsProvider = new WsProvider('ws://127.0.0.1:9920');
+const wsProvider = new WsProvider('ws://127.0.0.1:9944');
 // Create a keyring instance
-const keyring = new Keyring({ type: 'sr25519' });
+const keyring = new Keyring({ type: 'sr25519', ss58Format: 5 });
 
 describe('Coretime market listing', () => {
   let api: ApiPromise;
@@ -25,7 +25,7 @@ describe('Coretime market listing', () => {
   let market: Market;
 
   beforeEach(async function (): Promise<void> {
-    api = await ApiPromise.create({ provider: wsProvider, noInitWarn: true });
+    api = await ApiPromise.create({ provider: wsProvider, noInitWarn: true, types: { Id } });
 
     alice = keyring.addFromUri('//Alice');
     bob = keyring.addFromUri('//Bob');
@@ -45,24 +45,34 @@ describe('Coretime market listing', () => {
     };
     const regionRecord: RegionRecord = {
       end: 60,
-      owner: alice.address,
+      owner: bob.address,
       paid: null,
     };
     const region = new Region(regionId, regionRecord);
 
-    await createRegionCollection(api, alice);
-    await mintRegion(api, alice, region);
-    await approveTransfer(api, alice, region, xcRegions.address);
+    await createRegionCollection(api, bob);
+    await mintRegion(api, bob, region);
+    await approveTransfer(api, bob, region, xcRegions.address);
+
+    await initRegion(api, xcRegions, bob, region);
+
+    const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
+    await xcRegions.withSigner(bob).tx.approve(market.address, id, true);
+
+    const bitPrice = 50;
+    await market.withSigner(bob).tx.listRegion(id, bitPrice, bob.address, 0, 0);
+
+    await expectOnSale(market, id, bob, bitPrice);
+    expect((await market.query.regionPrice(id)).value.unwrap().ok.toNumber()).to.be.equal(
+      bitPrice * 80,
+    );
   });
 });
 
-async function createRegionCollection(
-  contractsApi: ApiPromise,
-  caller: KeyringPair,
-): Promise<void> {
+async function createRegionCollection(api: ApiPromise, caller: KeyringPair): Promise<void> {
   console.log(`Creating the region collection`);
 
-  const createCollectionCall = contractsApi.tx.uniques.create(REGION_COLLECTION_ID, caller.address);
+  const createCollectionCall = api.tx.uniques.create(REGION_COLLECTION_ID, caller.address);
 
   const callTx = async (resolve: () => void, reject: ({ reason }) => void) => {
     const unsub = await createCollectionCall.signAndSend(caller, ({ status, events }) => {
@@ -78,6 +88,21 @@ async function createRegionCollection(
   };
 
   return new Promise(callTx);
+}
+
+async function initRegion(
+  api: ApiPromise,
+  xcRegions: XcRegions,
+  caller: KeyringPair,
+  region: Region,
+) {
+  await xcRegions.withSigner(caller).tx.init(region.getEncodedRegionId(api), {
+    begin: region.getBegin(),
+    core: region.getCore(),
+    end: region.getEnd(),
+    // @ts-ignore
+    mask: region.getMask().getMask(),
+  });
 }
 
 async function mintRegion(api: ApiPromise, caller: KeyringPair, region: Region): Promise<void> {
@@ -127,4 +152,16 @@ async function approveTransfer(
   };
 
   return new Promise(callTx);
+}
+
+async function expectOnSale(market: Market, id: any, seller: KeyringPair, bitPrice: number) {
+  expect(market.query.listedRegions()).to.eventually.be.equal([id]);
+  expect((await market.query.listedRegion(id)).value.unwrap().ok.bitPrice).to.be.equal(bitPrice);
+  expect((await market.query.listedRegion(id)).value.unwrap().ok.metadataVersion).to.be.equal(0);
+  expect((await market.query.listedRegion(id)).value.unwrap().ok.seller).to.be.equal(
+    seller.address,
+  );
+  expect((await market.query.listedRegion(id)).value.unwrap().ok.saleRecipient).to.be.equal(
+    seller.address,
+  );
 }

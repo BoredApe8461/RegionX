@@ -7,6 +7,11 @@ export enum LangError {
 	couldNotReadInput = 'CouldNotReadInput'
 }
 
+export type VersionedRegion = {
+	version: number,
+	region: Region
+}
+
 export type Region = {
 	begin: number,
 	end: number,
@@ -104,11 +109,6 @@ export class PSP34ErrorBuilder {
 			safeTransferCheckFailed: value,
 		};
 	}
-}
-
-export type VersionedRegion = {
-	version: number,
-	region: Region
 }
 
 export interface Id {

@@ -17,10 +17,7 @@ use openbrush::{
 	contracts::traits::psp34::PSP34Error,
 	traits::{AccountId, BlockNumber},
 };
-use primitives::{
-	coretime::{Region, Timeslice},
-	Balance, Version,
-};
+use primitives::{coretime::Timeslice, Balance, Version};
 use xc_regions::types::XcRegionsError;
 
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
@@ -87,8 +84,6 @@ pub struct ReferencePoint {
 pub struct Listing {
 	/// The `AccountId` selling the specific region.
 	pub seller: AccountId,
-	/// The core mask of the region listed on sale.
-	pub region: Region,
 	/// The bit price of a region.
 	pub bit_price: Balance,
 	/// The `AccountId` receiving the payment from the sale.

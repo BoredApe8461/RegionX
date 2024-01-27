@@ -10,8 +10,8 @@ import type { ApiPromise } from '@polkadot/api';
 
 
 export default class Methods {
-	private __nativeContract : ContractPromise;
-	private __apiPromise: ApiPromise;
+	readonly __nativeContract : ContractPromise;
+	readonly __apiPromise: ApiPromise;
 
 	constructor(
 		nativeContract : ContractPromise,
@@ -38,6 +38,18 @@ export default class Methods {
 		__options: GasLimit,
 	){
 		return buildSubmittableExtrinsic( this.__apiPromise, this.__nativeContract, "listedRegions", [], __options);
+	}
+
+	/**
+	 * listedRegion
+	 *
+	 * @param { ArgumentTypes.Id } id,
+	*/
+	"listedRegion" (
+		id: ArgumentTypes.Id,
+		__options: GasLimit,
+	){
+		return buildSubmittableExtrinsic( this.__apiPromise, this.__nativeContract, "listedRegion", [id], __options);
 	}
 
 	/**

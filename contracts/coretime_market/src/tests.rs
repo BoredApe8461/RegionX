@@ -32,9 +32,9 @@ fn calculate_region_price_works() {
 	assert_eq!(
 		CoretimeMarket::calculate_region_price(
 			50, // current block number
+			Region { begin: 2, end: 10, core: 0, mask: CoreMask::complete() },
 			Listing {
 				seller: charlie,
-				region: Region { begin: 2, end: 10, core: 0, mask: CoreMask::complete() },
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
@@ -52,9 +52,9 @@ fn calculate_region_price_works() {
 	assert_eq!(
 		CoretimeMarket::calculate_region_price(
 			50, // current block number
+			Region { begin: 2, end: 10, core: 0, mask: CoreMask::from_chunk(0, 40) },
 			Listing {
 				seller: charlie,
-				region: Region { begin: 2, end: 10, core: 0, mask: CoreMask::from_chunk(0, 40) },
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
@@ -72,9 +72,9 @@ fn calculate_region_price_works() {
 	assert_eq!(
 		CoretimeMarket::calculate_region_price(
 			timeslice_to_block_number(4), // current block number
+			Region { begin: 2, end: 10, core: 0, mask: CoreMask::complete() },
 			Listing {
 				seller: charlie,
-				region: Region { begin: 2, end: 10, core: 0, mask: CoreMask::complete() },
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
@@ -92,9 +92,9 @@ fn calculate_region_price_works() {
 	assert_eq!(
 		CoretimeMarket::calculate_region_price(
 			timeslice_to_block_number(4), // current block number
+			Region { begin: 2, end: 10, core: 0, mask: CoreMask::from_chunk(40, 80) },
 			Listing {
 				seller: charlie,
-				region: Region { begin: 2, end: 10, core: 0, mask: CoreMask::from_chunk(40, 80) },
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
@@ -121,9 +121,9 @@ fn calculate_region_price_works() {
 	assert_eq!(
 		CoretimeMarket::calculate_region_price(
 			timeslice_to_block_number(8), // current block number
+			Region { begin: 2, end: 10, core: 0, mask: CoreMask::from_chunk(40, 80) },
 			Listing {
 				seller: charlie,
-				region: Region { begin: 2, end: 10, core: 0, mask: CoreMask::from_chunk(40, 80) },
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
@@ -141,9 +141,9 @@ fn calculate_region_price_works() {
 	assert_eq!(
 		CoretimeMarket::calculate_region_price(
 			timeslice_to_block_number(10), // current block number
+			Region { begin: 2, end: 10, core: 0, mask: CoreMask::from_chunk(40, 80) },
 			Listing {
 				seller: charlie,
-				region: Region { begin: 2, end: 10, core: 0, mask: CoreMask::from_chunk(40, 80) },
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,
@@ -164,9 +164,9 @@ fn calculate_region_price_works() {
 	assert_eq!(
 		CoretimeMarket::calculate_region_price(
 			timeslice_to_block_number(4), // current block number
+			Region { begin: 2, end: 10, core: 0, mask: CoreMask::complete() },
 			Listing {
 				seller: charlie,
-				region: Region { begin: 2, end: 10, core: 0, mask: CoreMask::complete() },
 				bit_price: 5,
 				sale_recipient: charlie,
 				metadata_version: 0,

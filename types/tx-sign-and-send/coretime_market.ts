@@ -10,12 +10,13 @@ import type BN from 'bn.js';
 // @ts-ignore
 import type {EventRecord} from "@polkadot/api/submittable";
 import {decodeEvents} from "../shared/utils";
+import EVENT_DATA_TYPE_DESCRIPTIONS from '../event-data/coretime_market.json';
 
 
 export default class Methods {
-	private __nativeContract : ContractPromise;
-	private __keyringPair : KeyringPair;
-	private __apiPromise: ApiPromise;
+	readonly __nativeContract : ContractPromise;
+	readonly __keyringPair : KeyringPair;
+	readonly __apiPromise: ApiPromise;
 
 	constructor(
 		apiPromise: ApiPromise,
@@ -35,7 +36,7 @@ export default class Methods {
 		__options ? : GasLimit,
 	){
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "xcRegionsContract", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "coretime_market");
+			return decodeEvents(events, this.__nativeContract, EVENT_DATA_TYPE_DESCRIPTIONS);
 		}, [], __options);
 	}
 
@@ -47,8 +48,22 @@ export default class Methods {
 		__options ? : GasLimit,
 	){
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "listedRegions", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "coretime_market");
+			return decodeEvents(events, this.__nativeContract, EVENT_DATA_TYPE_DESCRIPTIONS);
 		}, [], __options);
+	}
+
+	/**
+	* listedRegion
+	*
+	* @param { ArgumentTypes.Id } id,
+	*/
+	"listedRegion" (
+		id: ArgumentTypes.Id,
+		__options ? : GasLimit,
+	){
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "listedRegion", (events: EventRecord) => {
+			return decodeEvents(events, this.__nativeContract, EVENT_DATA_TYPE_DESCRIPTIONS);
+		}, [id], __options);
 	}
 
 	/**
@@ -61,7 +76,7 @@ export default class Methods {
 		__options ? : GasLimit,
 	){
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "regionPrice", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "coretime_market");
+			return decodeEvents(events, this.__nativeContract, EVENT_DATA_TYPE_DESCRIPTIONS);
 		}, [id], __options);
 	}
 
@@ -83,7 +98,7 @@ export default class Methods {
 		__options ? : GasLimitAndRequiredValue,
 	){
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "listRegion", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "coretime_market");
+			return decodeEvents(events, this.__nativeContract, EVENT_DATA_TYPE_DESCRIPTIONS);
 		}, [id, bitPrice, saleRecipient, currentTimeslice, currentTimesliceStart], __options);
 	}
 
@@ -97,7 +112,7 @@ export default class Methods {
 		__options ? : GasLimit,
 	){
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "unlistRegion", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "coretime_market");
+			return decodeEvents(events, this.__nativeContract, EVENT_DATA_TYPE_DESCRIPTIONS);
 		}, [regionId], __options);
 	}
 
@@ -113,7 +128,7 @@ export default class Methods {
 		__options ? : GasLimit,
 	){
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "updateRegionPrice", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "coretime_market");
+			return decodeEvents(events, this.__nativeContract, EVENT_DATA_TYPE_DESCRIPTIONS);
 		}, [regionId, newBitPrice], __options);
 	}
 
@@ -129,7 +144,7 @@ export default class Methods {
 		__options ? : GasLimitAndRequiredValue,
 	){
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "purchaseRegion", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "coretime_market");
+			return decodeEvents(events, this.__nativeContract, EVENT_DATA_TYPE_DESCRIPTIONS);
 		}, [id, metadataVersion], __options);
 	}
 

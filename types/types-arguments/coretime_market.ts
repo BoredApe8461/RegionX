@@ -48,6 +48,20 @@ export class IdBuilder {
 	}
 }
 
+export type Listing = {
+	seller: AccountId,
+	bitPrice: (string | number | BN),
+	saleRecipient: AccountId,
+	metadataVersion: (number | string | BN),
+	listedAt: ReferencePoint
+}
+
+export type ReferencePoint = {
+	blockNumber: (number | string | BN),
+	claimedTimeslice: (number | string | BN),
+	claimedTimesliceStart: (number | string | BN)
+}
+
 export interface MarketError {
 	arithmeticError ? : null,
 	invalidRegionId ? : null,

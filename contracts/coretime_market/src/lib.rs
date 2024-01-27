@@ -48,7 +48,7 @@ pub mod coretime_market {
 	};
 	use openbrush::{contracts::traits::psp34::Id, storage::Mapping, traits::Storage};
 	use primitives::{
-		coretime::{RawRegionId, Timeslice, TIMESLICE_DURATION_IN_BLOCKS},
+		coretime::{RawRegionId, Region, Timeslice, TIMESLICE_DURATION_IN_BLOCKS},
 		ensure, Version,
 	};
 	use sp_arithmetic::{FixedPointNumber, FixedU128};
@@ -117,11 +117,20 @@ pub mod coretime_market {
 		}
 
 		#[ink(message)]
+		pub fn listed_region(&self, id: Id) -> Result<Option<Listing>, MarketError> {
+			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
+			Ok(self.listings.get(&region_id))
+		}
+
+		#[ink(message)]
 		pub fn region_price(&self, id: Id) -> Result<Balance, MarketError> {
 			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
+
+			let metadata = RegionMetadataRef::get_metadata(&self.xc_regions_contract, region_id)
+				.map_err(MarketError::XcRegionsMetadataError)?;
 			let listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
 
-			Self::calculate_region_price(self.env().block_number(), listing)
+			Self::calculate_region_price(self.env().block_number(), metadata.region, listing)
 		}
 
 		/// A function for listing a region on sale.
@@ -192,7 +201,6 @@ pub mod coretime_market {
 				&region_id,
 				&Listing {
 					seller: caller,
-					region: metadata.region,
 					bit_price,
 					sale_recipient,
 					metadata_version: metadata.version,
@@ -262,7 +270,14 @@ pub mod coretime_market {
 			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
 			let listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
 
-			let price = Self::calculate_region_price(self.env().block_number(), listing.clone())?;
+			let metadata = RegionMetadataRef::get_metadata(&self.xc_regions_contract, region_id)
+				.map_err(MarketError::XcRegionsMetadataError)?;
+
+			let price = Self::calculate_region_price(
+				self.env().block_number(),
+				metadata.region,
+				listing.clone(),
+			)?;
 			ensure!(transferred_value >= price, MarketError::InsufficientFunds);
 
 			ensure!(listing.metadata_version == metadata_version, MarketError::MetadataNotMatching);
@@ -300,22 +315,22 @@ pub mod coretime_market {
 	impl CoretimeMarket {
 		pub(crate) fn calculate_region_price(
 			current_block_number: BlockNumber,
+			region: Region,
 			listing: Listing,
 		) -> Result<Balance, MarketError> {
 			let current_timeslice =
 				Self::current_timeslice(current_block_number, listing.listed_at);
 
-			if current_timeslice < listing.region.begin {
+			if current_timeslice < region.begin {
 				// The region is not yet active, hence the price has not yet decreased.
-				let price =
-					listing.bit_price.saturating_mul(listing.region.mask.count_ones() as Balance);
+				let price = listing.bit_price.saturating_mul(region.mask.count_ones() as Balance);
 
 				return Ok(price);
 			}
 
 			// Ok to use saturating since `region.end` is always greater than `region.begin` anyway.
-			let duration = listing.region.end.saturating_sub(listing.region.begin);
-			let wasted_timeslices = current_timeslice.saturating_sub(listing.region.begin);
+			let duration = region.end.saturating_sub(region.begin);
+			let wasted_timeslices = current_timeslice.saturating_sub(region.begin);
 
 			let wasted_ratio = FixedU128::checked_from_rational(wasted_timeslices, duration)
 				.ok_or(MarketError::ArithmeticError)?;
@@ -326,9 +341,9 @@ pub mod coretime_market {
 				.into_inner()
 				.saturating_div(FixedU128::accuracy());
 
-			let price = listing.bit_price.saturating_mul(
-				listing.region.mask.count_ones_from(current_bit_index as usize) as Balance,
-			);
+			let price = listing
+				.bit_price
+				.saturating_mul(region.mask.count_ones_from(current_bit_index as usize) as Balance);
 
 			Ok(price)
 		}

@@ -282,7 +282,7 @@ pub mod coretime_market {
 
 			// Transfer the tokens to the sale recipient.
 			self.env()
-				.transfer(listing.sale_recipient, transferred_value)
+				.transfer(listing.sale_recipient, price)
 				.map_err(|_| MarketError::TransferFailed)?;
 
 			Ok(())

@@ -98,7 +98,9 @@ export async function approveTransfer(
 
 export async function expectOnSale(market: Market, id: any, seller: KeyringPair, bitPrice: number) {
   expect(market.query.listedRegions()).to.eventually.be.equal([id]);
-  expect((await market.query.listedRegion(id)).value.unwrap().ok.bitPrice).to.be.equal(bitPrice);
+  expect(
+    BigInt((await market.query.listedRegion(id)).value.unwrap().ok.bitPrice.toString()),
+  ).to.be.equal(BigInt(bitPrice));
   expect((await market.query.listedRegion(id)).value.unwrap().ok.metadataVersion).to.be.equal(0);
   expect((await market.query.listedRegion(id)).value.unwrap().ok.listedAt).to.be.equal(0);
   expect((await market.query.listedRegion(id)).value.unwrap().ok.seller).to.be.equal(

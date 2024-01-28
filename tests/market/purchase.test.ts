@@ -7,7 +7,6 @@ import XcRegions from '../../types/contracts/xc_regions';
 import Market from '../../types/contracts/coretime_market';
 import chaiAsPromised from 'chai-as-promised';
 import { CoreMask, Id, Region, RegionId, RegionRecord } from 'coretime-utils';
-import { MarketErrorBuilder, PSP34ErrorBuilder } from '../../types/types-returns/coretime_market';
 import {
   approveTransfer,
   balanceOf,
@@ -20,7 +19,7 @@ import {
 use(chaiAsPromised);
 
 const REGION_COLLECTION_ID = 42;
-const LISTING_DEPOIST = 100;
+const LISTING_DEPOIST = 0;
 
 const wsProvider = new WsProvider('ws://127.0.0.1:9944');
 // Create a keyring instance
@@ -30,6 +29,7 @@ describe('Coretime market purchases', () => {
   let api: ApiPromise;
   let alice: KeyringPair;
   let bob: KeyringPair;
+  let charlie: KeyringPair;
 
   let xcRegions: XcRegions;
   let market: Market;
@@ -39,6 +39,7 @@ describe('Coretime market purchases', () => {
 
     alice = keyring.addFromUri('//Alice');
     bob = keyring.addFromUri('//Bob');
+    charlie = keyring.addFromUri('//Charlie');
 
     const xcRegionsFactory = new XcRegions_Factory(api, alice);
     xcRegions = new XcRegions((await xcRegionsFactory.new()).address, alice, api);
@@ -76,20 +77,30 @@ describe('Coretime market purchases', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    const bitPrice = 50;
+    const bitPrice = 5 * Math.pow(10, 12);
     await market
-      .withSigner(alice)
-      .tx.listRegion(id, bitPrice, alice.address, { value: LISTING_DEPOIST });
+      .withSigner(charlie)
+      .tx.listRegion(id, bitPrice, charlie.address, { value: LISTING_DEPOIST });
 
-    await expectOnSale(market, id, alice, bitPrice);
+    await expectOnSale(market, id, charlie, bitPrice);
     expect((await market.query.regionPrice(id)).value.unwrap().ok.toNumber()).to.be.equal(
       bitPrice * 80,
     );
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
 
+    // Maybe wait for a few seconds? 
+    const charlieBalance = await balanceOf(api, charlie.address);
+    const bobBalance = await balanceOf(api, bob.address);
+
     await market.withSigner(bob).tx.purchaseRegion(id, 0, { value: bitPrice * 80 });
+    // Bob receives the region:
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(bob.address);
-    // FIXME:
-    expect(await balanceOf(api, alice.address)).to.be.equal(bitPrice * 80);
+
+    // Bob's balance is reduced:
+    expect(await balanceOf(api, bob.address)).to.be.lessThan(bobBalance - bitPrice * 80);
+    // Charlie's balance is increased.
+    expect(await balanceOf(api, charlie.address)).to.be.greaterThan(charlieBalance);
   });
 });
+
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));

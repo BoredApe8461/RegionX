@@ -7,6 +7,15 @@ export enum LangError {
 	couldNotReadInput = 'CouldNotReadInput'
 }
 
+export type Region = {
+	begin: number,
+	end: number,
+	core: number,
+	mask: CoreMask
+}
+
+export type CoreMask = Array<number>;
+
 export interface XcRegionsError {
 	cannotInitialize ? : null,
 	cannotRemove ? : null,
@@ -96,15 +105,6 @@ export class PSP34ErrorBuilder {
 		};
 	}
 }
-
-export type Region = {
-	begin: number,
-	end: number,
-	core: number,
-	mask: CoreMask
-}
-
-export type CoreMask = Array<number>;
 
 export type VersionedRegion = {
 	version: number,

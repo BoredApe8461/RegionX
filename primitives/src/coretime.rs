@@ -26,7 +26,8 @@ pub type Timeslice = u32;
 /// Index of a Polkadot Core.
 pub type CoreIndex = u16;
 
-pub const TIMESLICE_DURATION_IN_BLOCKS: BlockNumber = 80;
+/// Duration of a timeslice in rc blocks.
+pub const TIMESLICE_PERIOD: BlockNumber = 80;
 
 /// All Regions are also associated with a Core Mask, an 80-bit bitmap, to denote the regularity at
 /// which it may be scheduled on the core.

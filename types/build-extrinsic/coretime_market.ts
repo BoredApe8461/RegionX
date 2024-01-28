@@ -70,18 +70,14 @@ export default class Methods {
 	 * @param { ArgumentTypes.Id } id,
 	 * @param { (string | number | BN) } bitPrice,
 	 * @param { ArgumentTypes.AccountId | null } saleRecipient,
-	 * @param { (number | string | BN) } currentTimeslice,
-	 * @param { (number | string | BN) } currentTimesliceStart,
 	*/
 	"listRegion" (
 		id: ArgumentTypes.Id,
 		bitPrice: (string | number | BN),
 		saleRecipient: ArgumentTypes.AccountId | null,
-		currentTimeslice: (number | string | BN),
-		currentTimesliceStart: (number | string | BN),
 		__options: GasLimitAndRequiredValue,
 	){
-		return buildSubmittableExtrinsic( this.__apiPromise, this.__nativeContract, "listRegion", [id, bitPrice, saleRecipient, currentTimeslice, currentTimesliceStart], __options);
+		return buildSubmittableExtrinsic( this.__apiPromise, this.__nativeContract, "listRegion", [id, bitPrice, saleRecipient], __options);
 	}
 
 	/**

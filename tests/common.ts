@@ -43,7 +43,11 @@ export async function initRegion(
   });
 }
 
-export async function mintRegion(api: ApiPromise, caller: KeyringPair, region: Region): Promise<void> {
+export async function mintRegion(
+  api: ApiPromise,
+  caller: KeyringPair,
+  region: Region,
+): Promise<void> {
   console.log(`Minting a region`);
 
   const rawRegionId = region.getEncodedRegionId(api);
@@ -96,6 +100,7 @@ export async function expectOnSale(market: Market, id: any, seller: KeyringPair,
   expect(market.query.listedRegions()).to.eventually.be.equal([id]);
   expect((await market.query.listedRegion(id)).value.unwrap().ok.bitPrice).to.be.equal(bitPrice);
   expect((await market.query.listedRegion(id)).value.unwrap().ok.metadataVersion).to.be.equal(0);
+  expect((await market.query.listedRegion(id)).value.unwrap().ok.listedAt).to.be.equal(0);
   expect((await market.query.listedRegion(id)).value.unwrap().ok.seller).to.be.equal(
     seller.address,
   );
@@ -105,10 +110,10 @@ export async function expectOnSale(market: Market, id: any, seller: KeyringPair,
 }
 
 export async function balanceOf(api: ApiPromise, acc: string): Promise<number> {
-    const account: any = (await api.query.system.account(acc)).toHuman();
-    return parseHNString(account.data.free);
+  const account: any = (await api.query.system.account(acc)).toHuman();
+  return parseHNString(account.data.free);
 }
 
 export function parseHNString(str: string): number {
   return parseInt(str.replace(/,/g, ''));
-};
+}

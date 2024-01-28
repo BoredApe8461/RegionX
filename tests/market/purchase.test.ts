@@ -8,8 +8,14 @@ import Market from '../../types/contracts/coretime_market';
 import chaiAsPromised from 'chai-as-promised';
 import { CoreMask, Id, Region, RegionId, RegionRecord } from 'coretime-utils';
 import { MarketErrorBuilder, PSP34ErrorBuilder } from '../../types/types-returns/coretime_market';
-import { approveTransfer, balanceOf, createRegionCollection, expectOnSale, initRegion, mintRegion } from '../common';
-
+import {
+  approveTransfer,
+  balanceOf,
+  createRegionCollection,
+  expectOnSale,
+  initRegion,
+  mintRegion,
+} from '../common';
 
 use(chaiAsPromised);
 
@@ -73,7 +79,7 @@ describe('Coretime market purchases', () => {
     const bitPrice = 50;
     await market
       .withSigner(alice)
-      .tx.listRegion(id, bitPrice, alice.address, 0, 0, { value: LISTING_DEPOIST });
+      .tx.listRegion(id, bitPrice, alice.address, { value: LISTING_DEPOIST });
 
     await expectOnSale(market, id, alice, bitPrice);
     expect((await market.query.regionPrice(id)).value.unwrap().ok.toNumber()).to.be.equal(
@@ -81,7 +87,7 @@ describe('Coretime market purchases', () => {
     );
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
 
-    await market.withSigner(bob).tx.purchaseRegion(id, 0, {value: bitPrice * 80});
+    await market.withSigner(bob).tx.purchaseRegion(id, 0, { value: bitPrice * 80 });
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(bob.address);
     // FIXME:
     expect(await balanceOf(api, alice.address)).to.be.equal(bitPrice * 80);

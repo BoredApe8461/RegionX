@@ -17,6 +17,7 @@ openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = 
 
 environment = { path = "../../environment", default-features = false, features = ["ink"] }
 primitives = { path = "../../primitives", default-features = false  }
+block-number-extension = { path = "../../extension/block-number-extension", default-features = false, features = ["ink"]}
 xc_regions = { path = "../xc_regions", default-features = false, features = ["ink-as-dependency"] }
 
 [dev-dependencies]

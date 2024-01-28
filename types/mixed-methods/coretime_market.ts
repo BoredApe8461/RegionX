@@ -82,7 +82,7 @@ export default class Methods {
 		id: ArgumentTypes.Id,
 		__options: GasLimit,
 	): Promise< QueryReturnType< Result<Result<ReturnNumber, ReturnTypes.MarketError>, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "regionPrice", [id], __options, (result) => { return handleReturnType(result, getTypeDescription(24, DATA_TYPE_DESCRIPTIONS)); });
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "regionPrice", [id], __options, (result) => { return handleReturnType(result, getTypeDescription(23, DATA_TYPE_DESCRIPTIONS)); });
 	}
 
 	/**
@@ -91,21 +91,17 @@ export default class Methods {
 	* @param { ArgumentTypes.Id } id,
 	* @param { (string | number | BN) } bitPrice,
 	* @param { ArgumentTypes.AccountId | null } saleRecipient,
-	* @param { (number | string | BN) } currentTimeslice,
-	* @param { (number | string | BN) } currentTimesliceStart,
 	* @returns { void }
 	*/
 	"listRegion" (
 		id: ArgumentTypes.Id,
 		bitPrice: (string | number | BN),
 		saleRecipient: ArgumentTypes.AccountId | null,
-		currentTimeslice: (number | string | BN),
-		currentTimesliceStart: (number | string | BN),
 		__options: GasLimitAndRequiredValue,
 	){
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "listRegion", (events: EventRecord) => {
 			return decodeEvents(events, this.__nativeContract, EVENT_DATA_TYPE_DESCRIPTIONS);
-		}, [id, bitPrice, saleRecipient, currentTimeslice, currentTimesliceStart], __options);
+		}, [id, bitPrice, saleRecipient], __options);
 	}
 
 	/**
@@ -118,7 +114,7 @@ export default class Methods {
 		regionId: (string | number | BN),
 		__options: GasLimit,
 	): Promise< QueryReturnType< Result<Result<null, ReturnTypes.MarketError>, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "unlistRegion", [regionId], __options, (result) => { return handleReturnType(result, getTypeDescription(27, DATA_TYPE_DESCRIPTIONS)); });
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "unlistRegion", [regionId], __options, (result) => { return handleReturnType(result, getTypeDescription(26, DATA_TYPE_DESCRIPTIONS)); });
 	}
 
 	/**
@@ -133,7 +129,7 @@ export default class Methods {
 		newBitPrice: (string | number | BN),
 		__options: GasLimit,
 	): Promise< QueryReturnType< Result<Result<null, ReturnTypes.MarketError>, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "updateRegionPrice", [regionId, newBitPrice], __options, (result) => { return handleReturnType(result, getTypeDescription(27, DATA_TYPE_DESCRIPTIONS)); });
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "updateRegionPrice", [regionId, newBitPrice], __options, (result) => { return handleReturnType(result, getTypeDescription(26, DATA_TYPE_DESCRIPTIONS)); });
 	}
 
 	/**

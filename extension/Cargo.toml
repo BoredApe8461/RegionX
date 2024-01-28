@@ -16,6 +16,7 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 
 primitives = { path = "../primitives", default-features = false }
 uniques-extension = { path = "./uniques-extension", default-features = false, features = ["ink"] }
+block-number-extension = { path = "./block-number-extension", default-features = false, features = ["ink"] }
 
 obce = { git = "https://github.com/727-Ventures/obce", default-features = false }
 

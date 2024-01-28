@@ -21,3 +21,4 @@
 pub struct Extension;
 
 impl uniques_extension::UniquesExtension for Extension {}
+impl block_number_extension::BlockNumberProviderExtension for Extension {}

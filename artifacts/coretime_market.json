@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0xd608502d00c05626002b32845da1a0918339a897db42791d54a4d19dd7be6be5",
+    "hash": "0x2d70277bfa70704ca4ad7e2a21cecb0bd73bcb014ae79091f94e20ed6680905e",
     "language": "ink! 4.3.0",
     "compiler": "rustc 1.76.0-nightly",
     "build_info": {
@@ -82,13 +82,13 @@
         "displayName": [
           "ChainExtension"
         ],
-        "type": 30
+        "type": 29
       },
       "hash": {
         "displayName": [
           "Hash"
         ],
-        "type": 29
+        "type": 28
       },
       "maxEventTopics": 4,
       "timestamp": {
@@ -304,7 +304,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 24
+          "type": 23
         },
         "selector": "0x6f91fe12"
       },
@@ -334,25 +334,7 @@
               "displayName": [
                 "Option"
               ],
-              "type": 26
-            }
-          },
-          {
-            "label": "current_timeslice",
-            "type": {
-              "displayName": [
-                "Timeslice"
-              ],
-              "type": 4
-            }
-          },
-          {
-            "label": "current_timeslice_start",
-            "type": {
-              "displayName": [
-                "BlockNumber"
-              ],
-              "type": 4
+              "type": 25
             }
           }
         ],
@@ -367,18 +349,6 @@
           "   single bit of the region's coremask, i.e., 1/80th of the total price.",
           " - `sale_recipient`: The `AccountId` receiving the payment from the sale. If not",
           "   specified this will be the caller.",
-          " - `current_timeslice`: The current timeslice. Used for determining the current timeslice",
-          "   at the moment when someone purchases this region.",
-          " - `current_timeslice_start`: The block number when the current timeslice started. Used",
-          "   for determining the region price.",
-          "",
-          " NOTE: The contract can't verify the correctness of `current_timeslice` and",
-          " `current_timeslice_start`. These two values are used to determine  the region's price.",
-          " While users can manipulate this data, there is no incentive to do so. If set to a",
-          " greater value, the price of the region will drop more quickly, as the contract will",
-          " assume more of the listed region's resources were wasted. Conversely, if the timeslice",
-          " is set to a smaller value, the price of the region will decrease more slowly,",
-          " potentially resulting in reduced buyer interest.",
           "",
           " Before making this call, the caller must first approve their region to the market",
           " contract, as it will be transferred to the contract when listed for sale.",
@@ -396,7 +366,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 27
+          "type": 26
         },
         "selector": "0xad229eb3"
       },
@@ -428,7 +398,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 27
+          "type": 26
         },
         "selector": "0x2cda3dc9"
       },
@@ -470,7 +440,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 27
+          "type": 26
         },
         "selector": "0x90fd261d"
       },
@@ -516,7 +486,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 27
+          "type": 26
         },
         "selector": "0xa2f9e3b0"
       }
@@ -571,37 +541,9 @@
                         },
                         {
                           "layout": {
-                            "struct": {
-                              "fields": [
-                                {
-                                  "layout": {
-                                    "leaf": {
-                                      "key": "0x17f3ca29",
-                                      "ty": 4
-                                    }
-                                  },
-                                  "name": "block_number"
-                                },
-                                {
-                                  "layout": {
-                                    "leaf": {
-                                      "key": "0x17f3ca29",
-                                      "ty": 4
-                                    }
-                                  },
-                                  "name": "claimed_timeslice"
-                                },
-                                {
-                                  "layout": {
-                                    "leaf": {
-                                      "key": "0x17f3ca29",
-                                      "ty": 4
-                                    }
-                                  },
-                                  "name": "claimed_timeslice_start"
-                                }
-                              ],
-                              "name": "ReferencePoint"
+                            "leaf": {
+                              "key": "0x17f3ca29",
+                              "ty": 4
                             }
                           },
                           "name": "listed_at"
@@ -1031,7 +973,7 @@
               {
                 "fields": [
                   {
-                    "type": 20
+                    "type": 19
                   }
                 ],
                 "index": 1,
@@ -1047,7 +989,7 @@
           },
           {
             "name": "E",
-            "type": 20
+            "type": 19
           }
         ],
         "path": [
@@ -1116,8 +1058,8 @@
               },
               {
                 "name": "listed_at",
-                "type": 19,
-                "typeName": "ReferencePoint"
+                "type": 4,
+                "typeName": "Timeslice"
               }
             ]
           }
@@ -1131,37 +1073,6 @@
     },
     {
       "id": 19,
-      "type": {
-        "def": {
-          "composite": {
-            "fields": [
-              {
-                "name": "block_number",
-                "type": 4,
-                "typeName": "BlockNumber"
-              },
-              {
-                "name": "claimed_timeslice",
-                "type": 4,
-                "typeName": "Timeslice"
-              },
-              {
-                "name": "claimed_timeslice_start",
-                "type": 4,
-                "typeName": "BlockNumber"
-              }
-            ]
-          }
-        },
-        "path": [
-          "coretime_market",
-          "types",
-          "ReferencePoint"
-        ]
-      }
-    },
-    {
-      "id": 20,
       "type": {
         "def": {
           "variant": {
@@ -1205,7 +1116,7 @@
               {
                 "fields": [
                   {
-                    "type": 21,
+                    "type": 20,
                     "typeName": "PSP34Error"
                   }
                 ],
@@ -1215,7 +1126,7 @@
               {
                 "fields": [
                   {
-                    "type": 23,
+                    "type": 22,
                     "typeName": "XcRegionsError"
                   }
                 ],
@@ -1233,7 +1144,7 @@
       }
     },
     {
-      "id": 21,
+      "id": 20,
       "type": {
         "def": {
           "variant": {
@@ -1241,7 +1152,7 @@
               {
                 "fields": [
                   {
-                    "type": 22,
+                    "type": 21,
                     "typeName": "String"
                   }
                 ],
@@ -1267,7 +1178,7 @@
               {
                 "fields": [
                   {
-                    "type": 22,
+                    "type": 21,
                     "typeName": "String"
                   }
                 ],
@@ -1287,7 +1198,7 @@
       }
     },
     {
-      "id": 22,
+      "id": 21,
       "type": {
         "def": {
           "primitive": "str"
@@ -1295,7 +1206,7 @@
       }
     },
     {
-      "id": 23,
+      "id": 22,
       "type": {
         "def": {
           "variant": {
@@ -1327,7 +1238,7 @@
               {
                 "fields": [
                   {
-                    "type": 21,
+                    "type": 20,
                     "typeName": "PSP34Error"
                   }
                 ],
@@ -1345,7 +1256,7 @@
       }
     },
     {
-      "id": 24,
+      "id": 23,
       "type": {
         "def": {
           "variant": {
@@ -1353,7 +1264,7 @@
               {
                 "fields": [
                   {
-                    "type": 25
+                    "type": 24
                   }
                 ],
                 "index": 0,
@@ -1374,7 +1285,7 @@
         "params": [
           {
             "name": "T",
-            "type": 25
+            "type": 24
           },
           {
             "name": "E",
@@ -1387,7 +1298,7 @@
       }
     },
     {
-      "id": 25,
+      "id": 24,
       "type": {
         "def": {
           "variant": {
@@ -1404,7 +1315,7 @@
               {
                 "fields": [
                   {
-                    "type": 20
+                    "type": 19
                   }
                 ],
                 "index": 1,
@@ -1420,7 +1331,7 @@
           },
           {
             "name": "E",
-            "type": 20
+            "type": 19
           }
         ],
         "path": [
@@ -1429,7 +1340,7 @@
       }
     },
     {
-      "id": 26,
+      "id": 25,
       "type": {
         "def": {
           "variant": {
@@ -1462,7 +1373,7 @@
       }
     },
     {
-      "id": 27,
+      "id": 26,
       "type": {
         "def": {
           "variant": {
@@ -1470,7 +1381,7 @@
               {
                 "fields": [
                   {
-                    "type": 28
+                    "type": 27
                   }
                 ],
                 "index": 0,
@@ -1491,7 +1402,7 @@
         "params": [
           {
             "name": "T",
-            "type": 28
+            "type": 27
           },
           {
             "name": "E",
@@ -1504,7 +1415,7 @@
       }
     },
     {
-      "id": 28,
+      "id": 27,
       "type": {
         "def": {
           "variant": {
@@ -1521,7 +1432,7 @@
               {
                 "fields": [
                   {
-                    "type": 20
+                    "type": 19
                   }
                 ],
                 "index": 1,
@@ -1537,7 +1448,7 @@
           },
           {
             "name": "E",
-            "type": 20
+            "type": 19
           }
         ],
         "path": [
@@ -1546,7 +1457,7 @@
       }
     },
     {
-      "id": 29,
+      "id": 28,
       "type": {
         "def": {
           "composite": {
@@ -1566,7 +1477,7 @@
       }
     },
     {
-      "id": 30,
+      "id": 29,
       "type": {
         "def": {
           "composite": {}

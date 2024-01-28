@@ -13,10 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-use openbrush::{
-	contracts::traits::psp34::PSP34Error,
-	traits::{AccountId, BlockNumber},
-};
+use openbrush::{contracts::traits::psp34::PSP34Error, traits::AccountId};
 use primitives::{coretime::Timeslice, Balance, Version};
 use xc_regions::types::XcRegionsError;
 
@@ -67,20 +64,6 @@ impl core::fmt::Display for MarketError {
 
 #[derive(scale::Decode, scale::Encode, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
-pub struct ReferencePoint {
-	pub block_number: BlockNumber,
-	/// The timeslice when the user claims to list their region on sale.
-	///
-	/// This is user provided information and is not guaranteed to be correct.
-	pub claimed_timeslice: Timeslice,
-	/// The block number when the `claimed_timeslice` started.
-	///
-	/// This is user provided information and is not guaranteed to be correct.
-	pub claimed_timeslice_start: BlockNumber,
-}
-
-#[derive(scale::Decode, scale::Encode, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
 pub struct Listing {
 	/// The `AccountId` selling the specific region.
 	pub seller: AccountId,
@@ -93,5 +76,5 @@ pub struct Listing {
 	/// The metadata version of the region listed on sale. Used to prevent front running attacks.
 	pub metadata_version: Version,
 	/// The timeslice when the region was listed on sale.
-	pub listed_at: ReferencePoint,
+	pub listed_at: Timeslice,
 }

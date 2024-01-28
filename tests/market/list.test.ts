@@ -8,7 +8,13 @@ import Market from '../../types/contracts/coretime_market';
 import chaiAsPromised from 'chai-as-promised';
 import { CoreMask, Id, Region, RegionId, RegionRecord } from 'coretime-utils';
 import { MarketErrorBuilder, PSP34ErrorBuilder } from '../../types/types-returns/coretime_market';
-import { approveTransfer, createRegionCollection, expectOnSale, initRegion, mintRegion } from '../common';
+import {
+  approveTransfer,
+  createRegionCollection,
+  expectOnSale,
+  initRegion,
+  mintRegion,
+} from '../common';
 
 use(chaiAsPromised);
 
@@ -70,7 +76,7 @@ describe('Coretime market listing', () => {
     const bitPrice = 50;
     await market
       .withSigner(alice)
-      .tx.listRegion(id, bitPrice, alice.address, 0, 0, { value: LISTING_DEPOIST });
+      .tx.listRegion(id, bitPrice, alice.address, { value: LISTING_DEPOIST });
 
     await expectOnSale(market, id, alice, bitPrice);
     expect((await market.query.regionPrice(id)).value.unwrap().ok.toNumber()).to.be.equal(
@@ -101,7 +107,7 @@ describe('Coretime market listing', () => {
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
     const bitPrice = 50;
-    const result = market.withSigner(alice).query.listRegion(id, bitPrice, alice.address, 0, 0);
+    const result = market.withSigner(alice).query.listRegion(id, bitPrice, alice.address);
     expect((await result).value.unwrap().err).to.deep.equal(MarketErrorBuilder.MissingDeposit());
   });
 
@@ -128,7 +134,7 @@ describe('Coretime market listing', () => {
     const bitPrice = 50;
     const result = await market
       .withSigner(alice)
-      .query.listRegion(id, bitPrice, alice.address, 0, 0, { value: LISTING_DEPOIST });
+      .query.listRegion(id, bitPrice, alice.address, { value: LISTING_DEPOIST });
     expect(result.value.unwrap().err).to.deep.equal(
       MarketErrorBuilder.XcRegionsPsp34Error(PSP34ErrorBuilder.NotApproved()),
     );
@@ -159,7 +165,7 @@ describe('Coretime market listing', () => {
       const bitPrice = 50;
       const result = await market
         .withSigner(alice)
-        .query.listRegion(id, bitPrice, alice.address, 0, 0, { value: LISTING_DEPOIST });
+        .query.listRegion(id, bitPrice, alice.address, { value: LISTING_DEPOIST });
       expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.RegionExpired());
     }, 6000);
   });

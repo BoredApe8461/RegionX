@@ -6,20 +6,6 @@ export enum LangError {
 	couldNotReadInput = 'CouldNotReadInput'
 }
 
-export type VersionedRegion = {
-	version: (number | string | BN),
-	region: Region
-}
-
-export type Region = {
-	begin: (number | string | BN),
-	end: (number | string | BN),
-	core: (number | string | BN),
-	mask: CoreMask
-}
-
-export type CoreMask = Array<(number | string | BN)>;
-
 export interface XcRegionsError {
 	cannotInitialize ? : null,
 	cannotRemove ? : null,
@@ -108,6 +94,20 @@ export class PSP34ErrorBuilder {
 			safeTransferCheckFailed: value,
 		};
 	}
+}
+
+export type Region = {
+	begin: (number | string | BN),
+	end: (number | string | BN),
+	core: (number | string | BN),
+	mask: CoreMask
+}
+
+export type CoreMask = Array<(number | string | BN)>;
+
+export type VersionedRegion = {
+	version: (number | string | BN),
+	region: Region
 }
 
 export interface Id {

@@ -53,13 +53,7 @@ export type Listing = {
 	bitPrice: (string | number | BN),
 	saleRecipient: AccountId,
 	metadataVersion: (number | string | BN),
-	listedAt: ReferencePoint
-}
-
-export type ReferencePoint = {
-	blockNumber: (number | string | BN),
-	claimedTimeslice: (number | string | BN),
-	claimedTimesliceStart: (number | string | BN)
+	listedAt: (number | string | BN)
 }
 
 export interface MarketError {

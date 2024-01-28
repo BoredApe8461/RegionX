@@ -72,7 +72,7 @@ pub struct Listing {
 	/// The `AccountId` receiving the payment from the sale.
 	///
 	/// If not set specified otherwise this should be the `seller` account.
-	pub sale_recipient: AccountId,
+	pub sale_recepient: AccountId,
 	/// The metadata version of the region listed on sale. Used to prevent front running attacks.
 	pub metadata_version: Version,
 	/// The timeslice when the region was listed on sale.

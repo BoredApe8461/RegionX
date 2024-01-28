@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0xd3d6bc608e8a36b7370ba27006b5c711df99566582753c22650705b69bd7cb03",
+    "hash": "0x72944118b3193fa437e6a3ec3b9aacd053f1fc8519cb6d70b1e49096d2c8f942",
     "language": "ink! 4.3.0",
     "compiler": "rustc 1.76.0-nightly",
     "build_info": {
@@ -106,12 +106,12 @@
               " The identifier of the region that got listed on sale."
             ],
             "indexed": true,
-            "label": "id",
+            "label": "region_id",
             "type": {
               "displayName": [
-                "Id"
+                "RawRegionId"
               ],
-              "type": 11
+              "type": 3
             }
           },
           {
@@ -145,7 +145,7 @@
               " The sale revenue recipient."
             ],
             "indexed": false,
-            "label": "sale_recipient",
+            "label": "sale_recepient",
             "type": {
               "displayName": [
                 "AccountId"
@@ -177,12 +177,12 @@
               " The identifier of the region that got listed on sale."
             ],
             "indexed": true,
-            "label": "id",
+            "label": "region_id",
             "type": {
               "displayName": [
-                "Id"
+                "RawRegionId"
               ],
-              "type": 11
+              "type": 3
             }
           },
           {
@@ -329,7 +329,7 @@
             }
           },
           {
-            "label": "sale_recipient",
+            "label": "sale_recepient",
             "type": {
               "displayName": [
                 "Option"
@@ -347,7 +347,7 @@
           "   list for sale.",
           " - `bit_price`: The price for the smallest unit of the region. This is the price for a",
           "   single bit of the region's coremask, i.e., 1/80th of the total price.",
-          " - `sale_recipient`: The `AccountId` receiving the payment from the sale. If not",
+          " - `sale_recepient`: The `AccountId` receiving the payment from the sale. If not",
           "   specified this will be the caller.",
           "",
           " Before making this call, the caller must first approve their region to the market",
@@ -528,7 +528,7 @@
                               "ty": 0
                             }
                           },
-                          "name": "sale_recipient"
+                          "name": "sale_recepient"
                         },
                         {
                           "layout": {
@@ -1047,7 +1047,7 @@
                 "typeName": "Balance"
               },
               {
-                "name": "sale_recipient",
+                "name": "sale_recepient",
                 "type": 0,
                 "typeName": "AccountId"
               },

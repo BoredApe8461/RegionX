@@ -11,6 +11,7 @@ import {
   approveTransfer,
   balanceOf,
   createRegionCollection,
+  expectEvent,
   expectOnSale,
   initRegion,
   mintRegion,
@@ -92,7 +93,13 @@ describe('Coretime market purchases', () => {
     const aliceBalance = await balanceOf(api, alice.address);
     const bobBalance = await balanceOf(api, bob.address);
 
-    await market.withSigner(bob).tx.purchaseRegion(id, 0, { value: bitPrice * 80 });
+    const result = await market.withSigner(bob).tx.purchaseRegion(id, 0, { value: bitPrice * 80 });
+    expectEvent(result, 'RegionPurchased', {
+      regionId: id.toPrimitive().u128,
+      buyer: bob.address,
+      totalPrice: (bitPrice * 80).toString(),
+    });
+
     // Bob receives the region:
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(bob.address);
 
@@ -193,7 +200,13 @@ describe('Coretime market purchases', () => {
     const charlieBalance = await balanceOf(api, charlie.address);
     const bobBalance = await balanceOf(api, bob.address);
 
-    await market.withSigner(bob).tx.purchaseRegion(id, 0, { value: bitPrice * 80 });
+    const result = await market.withSigner(bob).tx.purchaseRegion(id, 0, { value: bitPrice * 80 });
+    expectEvent(result, 'RegionPurchased', {
+      regionId: id.toPrimitive().u128,
+      buyer: bob.address,
+      totalPrice: (bitPrice * 80).toString(),
+    });
+
     // Bob receives the region:
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(bob.address);
 

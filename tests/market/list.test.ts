@@ -11,6 +11,7 @@ import { MarketErrorBuilder, PSP34ErrorBuilder } from '../../types/types-returns
 import {
   approveTransfer,
   createRegionCollection,
+  expectEvent,
   expectOnSale,
   initRegion,
   mintRegion,
@@ -64,19 +65,26 @@ describe('Coretime market listing', () => {
       paid: null,
     };
     const region = new Region(regionId, regionRecord);
+    const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
 
     await mintRegion(api, alice, region);
     await approveTransfer(api, alice, region, xcRegions.address);
 
     await initRegion(api, xcRegions, alice, region);
 
-    const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
     const bitPrice = 50;
-    await market
+    const result = await market
       .withSigner(alice)
       .tx.listRegion(id, bitPrice, alice.address, { value: LISTING_DEPOIST });
+    expectEvent(result, 'RegionListed', {
+      regionId: id.toPrimitive().u128,
+      bitPrice: bitPrice.toString(),
+      seller: alice.address,
+      saleRecepient: alice.address.toString(),
+      metadataVersion: 0,
+    });
 
     await expectOnSale(market, id, alice, bitPrice);
     expect((await market.query.regionPrice(id)).value.unwrap().ok.toNumber()).to.be.equal(

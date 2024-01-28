@@ -61,8 +61,12 @@ pub mod coretime_market {
 		/// A mapping that holds information about each region listed for sale.
 		pub listings: Mapping<RawRegionId, Listing>,
 		/// A vector containing all the region ids of regions listed on sale.
+		///
+		/// TODO: incentivize the removal of expired regions.
 		pub listed_regions: Vec<RawRegionId>,
 		/// The `AccountId` of the xc-regions contract.
+		///
+		/// Set on contract initialization. Can't be changed afterwards.
 		pub xc_regions_contract: AccountId,
 		/// The deposit required to list a region on sale.
 		///
@@ -74,13 +78,13 @@ pub mod coretime_market {
 	pub struct RegionListed {
 		/// The identifier of the region that got listed on sale.
 		#[ink(topic)]
-		pub(crate) id: Id,
+		pub(crate) region_id: RawRegionId,
 		/// The bit price of the listed region.
 		pub(crate) bit_price: Balance,
 		/// The seller of the region
 		pub(crate) seller: AccountId,
 		/// The sale revenue recipient.
-		pub(crate) sale_recipient: AccountId,
+		pub(crate) sale_recepient: AccountId,
 		/// The metadata version of the region.
 		pub(crate) metadata_version: Version,
 	}
@@ -89,7 +93,7 @@ pub mod coretime_market {
 	pub struct RegionPurchased {
 		/// The identifier of the region that got listed on sale.
 		#[ink(topic)]
-		pub(crate) id: Id,
+		pub(crate) region_id: RawRegionId,
 		/// The buyer of the region
 		pub(crate) buyer: AccountId,
 		/// The total price paid for the listed region.
@@ -141,7 +145,7 @@ pub mod coretime_market {
 		///   list for sale.
 		/// - `bit_price`: The price for the smallest unit of the region. This is the price for a
 		///   single bit of the region's coremask, i.e., 1/80th of the total price.
-		/// - `sale_recipient`: The `AccountId` receiving the payment from the sale. If not
+		/// - `sale_recepient`: The `AccountId` receiving the payment from the sale. If not
 		///   specified this will be the caller.
 		///
 		/// Before making this call, the caller must first approve their region to the market
@@ -156,7 +160,7 @@ pub mod coretime_market {
 			&mut self,
 			id: Id,
 			bit_price: Balance,
-			sale_recipient: Option<AccountId>,
+			sale_recepient: Option<AccountId>,
 		) -> Result<(), MarketError> {
 			let caller = self.env().caller();
 			let market = self.env().account_id();
@@ -181,14 +185,14 @@ pub mod coretime_market {
 			PSP34Ref::transfer(&self.xc_regions_contract, market, id.clone(), Default::default())
 				.map_err(MarketError::XcRegionsPsp34Error)?;
 
-			let sale_recipient = sale_recipient.unwrap_or(caller);
+			let sale_recepient = sale_recepient.unwrap_or(caller);
 
 			self.listings.insert(
 				&region_id,
 				&Listing {
 					seller: caller,
 					bit_price,
-					sale_recipient,
+					sale_recepient,
 					metadata_version: metadata.version,
 					listed_at: current_timeslice,
 				},
@@ -196,10 +200,10 @@ pub mod coretime_market {
 			self.listed_regions.push(region_id);
 
 			self.emit_event(RegionListed {
-				id,
+				region_id,
 				bit_price,
 				seller: caller,
-				sale_recipient,
+				sale_recepient,
 				metadata_version: metadata.version,
 			});
 
@@ -247,6 +251,7 @@ pub mod coretime_market {
 			id: Id,
 			metadata_version: Version,
 		) -> Result<(), MarketError> {
+			let caller = self.env().caller();
 			let transferred_value = self.env().transferred_value();
 
 			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
@@ -263,7 +268,7 @@ pub mod coretime_market {
 			// Transfer the region to the buyer.
 			PSP34Ref::transfer(
 				&self.xc_regions_contract,
-				self.env().caller(),
+				caller,
 				id.clone(),
 				Default::default(),
 			)
@@ -282,8 +287,14 @@ pub mod coretime_market {
 
 			// Transfer the tokens to the sale recipient.
 			self.env()
-				.transfer(listing.sale_recipient, price)
+				.transfer(listing.sale_recepient, price)
 				.map_err(|_| MarketError::TransferFailed)?;
+
+			self.emit_event(RegionPurchased {
+				region_id,
+				buyer: caller,
+				total_price: price,
+			});
 
 			Ok(())
 		}

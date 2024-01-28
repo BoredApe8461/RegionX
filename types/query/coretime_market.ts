@@ -82,16 +82,16 @@ export default class Methods {
 	*
 	* @param { ArgumentTypes.Id } id,
 	* @param { (string | number | BN) } bitPrice,
-	* @param { ArgumentTypes.AccountId | null } saleRecipient,
+	* @param { ArgumentTypes.AccountId | null } saleRecepient,
 	* @returns { Result<Result<null, ReturnTypes.MarketError>, ReturnTypes.LangError> }
 	*/
 	"listRegion" (
 		id: ArgumentTypes.Id,
 		bitPrice: (string | number | BN),
-		saleRecipient: ArgumentTypes.AccountId | null,
+		saleRecepient: ArgumentTypes.AccountId | null,
 		__options ? : GasLimitAndRequiredValue,
 	): Promise< QueryReturnType< Result<Result<null, ReturnTypes.MarketError>, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "listRegion", [id, bitPrice, saleRecipient], __options , (result) => { return handleReturnType(result, getTypeDescription(26, DATA_TYPE_DESCRIPTIONS)); });
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "listRegion", [id, bitPrice, saleRecepient], __options , (result) => { return handleReturnType(result, getTypeDescription(26, DATA_TYPE_DESCRIPTIONS)); });
 	}
 
 	/**

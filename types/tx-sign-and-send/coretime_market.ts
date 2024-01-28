@@ -85,17 +85,17 @@ export default class Methods {
 	*
 	* @param { ArgumentTypes.Id } id,
 	* @param { (string | number | BN) } bitPrice,
-	* @param { ArgumentTypes.AccountId | null } saleRecipient,
+	* @param { ArgumentTypes.AccountId | null } saleRecepient,
 	*/
 	"listRegion" (
 		id: ArgumentTypes.Id,
 		bitPrice: (string | number | BN),
-		saleRecipient: ArgumentTypes.AccountId | null,
+		saleRecepient: ArgumentTypes.AccountId | null,
 		__options ? : GasLimitAndRequiredValue,
 	){
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "listRegion", (events: EventRecord) => {
 			return decodeEvents(events, this.__nativeContract, EVENT_DATA_TYPE_DESCRIPTIONS);
-		}, [id, bitPrice, saleRecipient], __options);
+		}, [id, bitPrice, saleRecepient], __options);
 	}
 
 	/**

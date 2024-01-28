@@ -1,5 +1,6 @@
 import { ApiPromise } from '@polkadot/api';
-import { expect, use } from 'chai';
+import { expect } from 'chai';
+import { ReturnNumber } from '@727-ventures/typechain-types';
 import { KeyringPair } from '@polkadot/keyring/types';
 import XcRegions from '../types/contracts/xc_regions';
 import Market from '../types/contracts/coretime_market';
@@ -106,10 +107,23 @@ export async function expectOnSale(market: Market, id: any, seller: KeyringPair,
   expect((await market.query.listedRegion(id)).value.unwrap().ok.seller).to.be.equal(
     seller.address,
   );
-  expect((await market.query.listedRegion(id)).value.unwrap().ok.saleRecipient).to.be.equal(
+  expect((await market.query.listedRegion(id)).value.unwrap().ok.saleRecepient).to.be.equal(
     seller.address,
   );
 }
+
+// Helper function to parse Events
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const expectEvent = (result: { events?: any }, name: string, args: any): void => {
+  const event = result.events.find((event: { name: string }) => event.name === name);
+  for (const key of Object.keys(event.args)) {
+    if (event.args[key] instanceof ReturnNumber) {
+      event.args[key] = BigInt(event.args[key]).toString();
+    }
+  }
+  expect(event.name).deep.eq(name);
+  expect(JSON.stringify(event.args)).deep.eq(JSON.stringify(args));
+};
 
 export async function balanceOf(api: ApiPromise, acc: string): Promise<number> {
   const account: any = (await api.query.system.account(acc)).toHuman();

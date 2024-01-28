@@ -51,7 +51,7 @@ export class IdBuilder {
 export type Listing = {
 	seller: AccountId,
 	bitPrice: (string | number | BN),
-	saleRecipient: AccountId,
+	saleRecepient: AccountId,
 	metadataVersion: (number | string | BN),
 	listedAt: (number | string | BN)
 }

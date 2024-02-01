@@ -68,16 +68,16 @@ export default class Methods {
 	 * listRegion
 	 *
 	 * @param { ArgumentTypes.Id } id,
-	 * @param { (string | number | BN) } bitPrice,
+	 * @param { (string | number | BN) } timeslicePrice,
 	 * @param { ArgumentTypes.AccountId | null } saleRecepient,
 	*/
 	"listRegion" (
 		id: ArgumentTypes.Id,
-		bitPrice: (string | number | BN),
+		timeslicePrice: (string | number | BN),
 		saleRecepient: ArgumentTypes.AccountId | null,
 		__options: GasLimitAndRequiredValue,
 	){
-		return buildSubmittableExtrinsic( this.__apiPromise, this.__nativeContract, "listRegion", [id, bitPrice, saleRecepient], __options);
+		return buildSubmittableExtrinsic( this.__apiPromise, this.__nativeContract, "listRegion", [id, timeslicePrice, saleRecepient], __options);
 	}
 
 	/**
@@ -96,14 +96,14 @@ export default class Methods {
 	 * updateRegionPrice
 	 *
 	 * @param { (string | number | BN) } regionId,
-	 * @param { (string | number | BN) } newBitPrice,
+	 * @param { (string | number | BN) } newTimeslicePrice,
 	*/
 	"updateRegionPrice" (
 		regionId: (string | number | BN),
-		newBitPrice: (string | number | BN),
+		newTimeslicePrice: (string | number | BN),
 		__options: GasLimit,
 	){
-		return buildSubmittableExtrinsic( this.__apiPromise, this.__nativeContract, "updateRegionPrice", [regionId, newBitPrice], __options);
+		return buildSubmittableExtrinsic( this.__apiPromise, this.__nativeContract, "updateRegionPrice", [regionId, newTimeslicePrice], __options);
 	}
 
 	/**

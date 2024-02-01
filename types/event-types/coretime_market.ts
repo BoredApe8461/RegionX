@@ -3,7 +3,7 @@ import type * as ReturnTypes from '../types-returns/coretime_market';
 
 export interface RegionListed {
 	regionId: ReturnNumber;
-	bitPrice: ReturnNumber;
+	timeslicePrice: ReturnNumber;
 	seller: ReturnTypes.AccountId;
 	saleRecepient: ReturnTypes.AccountId;
 	metadataVersion: number;

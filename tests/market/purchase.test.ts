@@ -79,32 +79,36 @@ describe('Coretime market purchases', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    const bitPrice = 5 * Math.pow(10, 12);
+    const timeslicePrice = 5 * Math.pow(10, 12);
     await market
       .withSigner(alice)
-      .tx.listRegion(id, bitPrice, alice.address, { value: LISTING_DEPOIST });
+      .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
 
-    await expectOnSale(market, id, alice, bitPrice);
+    await expectOnSale(market, id, alice, timeslicePrice);
     expect((await market.query.regionPrice(id)).value.unwrap().ok.toNumber()).to.be.equal(
-      bitPrice * 80,
+      timeslicePrice * (region.getEnd() - region.getBegin()),
     );
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
 
     const aliceBalance = await balanceOf(api, alice.address);
     const bobBalance = await balanceOf(api, bob.address);
 
-    const result = await market.withSigner(bob).tx.purchaseRegion(id, 0, { value: bitPrice * 80 });
+    const result = await market
+      .withSigner(bob)
+      .tx.purchaseRegion(id, 0, { value: timeslicePrice * (region.getEnd() - region.getBegin()) });
     expectEvent(result, 'RegionPurchased', {
       regionId: id.toPrimitive().u128,
       buyer: bob.address,
-      totalPrice: (bitPrice * 80).toString(),
+      totalPrice: (timeslicePrice * (region.getEnd() - region.getBegin())).toString(),
     });
 
     // Bob receives the region:
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(bob.address);
 
     // Bob's balance is reduced:
-    expect(await balanceOf(api, bob.address)).to.be.lessThan(bobBalance - bitPrice * 80);
+    expect(await balanceOf(api, bob.address)).to.be.lessThan(
+      bobBalance - timeslicePrice * (region.getEnd() - region.getBegin()),
+    );
     // Alice's balance is increased.
     expect(await balanceOf(api, alice.address)).to.be.greaterThan(aliceBalance);
   });
@@ -130,20 +134,21 @@ describe('Coretime market purchases', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    const bitPrice = 5 * Math.pow(10, 12);
+    const timeslicePrice = 5 * Math.pow(10, 12);
     await market
       .withSigner(alice)
-      .tx.listRegion(id, bitPrice, alice.address, { value: LISTING_DEPOIST });
+      .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
 
-    await expectOnSale(market, id, alice, bitPrice);
+    await expectOnSale(market, id, alice, timeslicePrice);
     expect((await market.query.regionPrice(id)).value.unwrap().ok.toNumber()).to.be.equal(
-      bitPrice * 80,
+      timeslicePrice * (region.getEnd() - region.getBegin()),
     );
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
 
-    const result = await market
-      .withSigner(bob)
-      .query.purchaseRegion(id, 0, { value: bitPrice * 79 });
+    // Sending less tokens than supposed:
+    const result = await market.withSigner(bob).query.purchaseRegion(id, 0, {
+      value: timeslicePrice * (region.getEnd() - region.getBegin() - 1),
+    });
     expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.InsufficientFunds());
   });
 
@@ -161,11 +166,11 @@ describe('Coretime market purchases', () => {
     const region = new Region(regionId, regionRecord);
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
 
-    const bitPrice = 5 * Math.pow(10, 12);
+    const timeslicePrice = 5 * Math.pow(10, 12);
 
-    const result = await market
-      .withSigner(bob)
-      .query.purchaseRegion(id, 0, { value: bitPrice * 80 });
+    const result = await market.withSigner(bob).query.purchaseRegion(id, 0, {
+      value: timeslicePrice * (region.getEnd() - region.getBegin()),
+    });
     expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.RegionNotListed());
   });
 
@@ -190,29 +195,35 @@ describe('Coretime market purchases', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    const bitPrice = 5 * Math.pow(10, 12);
+    const timeslicePrice = 5 * Math.pow(10, 12);
     await market
       .withSigner(alice)
-      .tx.listRegion(id, bitPrice, charlie.address, { value: LISTING_DEPOIST });
+      .tx.listRegion(id, timeslicePrice, charlie.address, { value: LISTING_DEPOIST });
 
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
 
     const charlieBalance = await balanceOf(api, charlie.address);
     const bobBalance = await balanceOf(api, bob.address);
 
-    const result = await market.withSigner(bob).tx.purchaseRegion(id, 0, { value: bitPrice * 80 });
+    const result = await market
+      .withSigner(bob)
+      .tx.purchaseRegion(id, 0, { value: timeslicePrice * (region.getEnd() - region.getBegin()) });
     expectEvent(result, 'RegionPurchased', {
       regionId: id.toPrimitive().u128,
       buyer: bob.address,
-      totalPrice: (bitPrice * 80).toString(),
+      totalPrice: (timeslicePrice * (region.getEnd() - region.getBegin())).toString(),
     });
 
     // Bob receives the region:
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(bob.address);
 
     // Bob's balance is reduced:
-    expect(await balanceOf(api, bob.address)).to.be.lessThan(bobBalance - bitPrice * 80);
+    expect(await balanceOf(api, bob.address)).to.be.lessThan(
+      bobBalance - timeslicePrice * (region.getEnd() - region.getBegin()),
+    );
     // Charlie's balance is increased.
-    expect(await balanceOf(api, charlie.address)).to.be.equal(charlieBalance + bitPrice * 80);
+    expect(await balanceOf(api, charlie.address)).to.be.equal(
+      charlieBalance + timeslicePrice * (region.getEnd() - region.getBegin()),
+    );
   });
 });

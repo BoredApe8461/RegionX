@@ -50,10 +50,9 @@ export class IdBuilder {
 
 export type Listing = {
 	seller: AccountId,
-	bitPrice: (string | number | BN),
+	timeslicePrice: (string | number | BN),
 	saleRecepient: AccountId,
-	metadataVersion: (number | string | BN),
-	listedAt: (number | string | BN)
+	metadataVersion: (number | string | BN)
 }
 
 export interface MarketError {

@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x72944118b3193fa437e6a3ec3b9aacd053f1fc8519cb6d70b1e49096d2c8f942",
+    "hash": "0xadd2581963462cb825f96246a8d9131b4845eb80d1beb3893ccbbbad734b5f54",
     "language": "ink! 4.3.0",
     "compiler": "rustc 1.76.0-nightly",
     "build_info": {
@@ -116,10 +116,10 @@
           },
           {
             "docs": [
-              " The bit price of the listed region."
+              " The per timeslice price of the listed region."
             ],
             "indexed": false,
-            "label": "bit_price",
+            "label": "timeslice_price",
             "type": {
               "displayName": [
                 "Balance"
@@ -320,7 +320,7 @@
             }
           },
           {
-            "label": "bit_price",
+            "label": "timeslice_price",
             "type": {
               "displayName": [
                 "Balance"
@@ -345,8 +345,7 @@
           " ## Arguments:",
           " - `region_id`: The `u128` encoded identifier of the region that the caller intends to",
           "   list for sale.",
-          " - `bit_price`: The price for the smallest unit of the region. This is the price for a",
-          "   single bit of the region's coremask, i.e., 1/80th of the total price.",
+          " - `timeslice_price`: The price per a single timeslice.",
           " - `sale_recepient`: The `AccountId` receiving the payment from the sale. If not",
           "   specified this will be the caller.",
           "",
@@ -414,7 +413,7 @@
             }
           },
           {
-            "label": "_new_bit_price",
+            "label": "_new_timeslice_price",
             "type": {
               "displayName": [
                 "Balance"
@@ -429,8 +428,7 @@
           "",
           " ## Arguments:",
           " - `region_id`: The `u128` encoded identifier of the region being listed for sale.",
-          " - `bit_price`: The new price for the smallest unit of the region. This is the price for",
-          "   a single bit of the region's coremask, i.e., 1/80th of the total price."
+          " - `timeslice_price`: The new per timeslice price of the region."
         ],
         "label": "update_region_price",
         "mutates": false,
@@ -519,7 +517,7 @@
                               "ty": 3
                             }
                           },
-                          "name": "bit_price"
+                          "name": "timeslice_price"
                         },
                         {
                           "layout": {
@@ -538,15 +536,6 @@
                             }
                           },
                           "name": "metadata_version"
-                        },
-                        {
-                          "layout": {
-                            "leaf": {
-                              "key": "0x17f3ca29",
-                              "ty": 4
-                            }
-                          },
-                          "name": "listed_at"
                         }
                       ],
                       "name": "Listing"
@@ -1042,7 +1031,7 @@
                 "typeName": "AccountId"
               },
               {
-                "name": "bit_price",
+                "name": "timeslice_price",
                 "type": 3,
                 "typeName": "Balance"
               },
@@ -1055,11 +1044,6 @@
                 "name": "metadata_version",
                 "type": 4,
                 "typeName": "Version"
-              },
-              {
-                "name": "listed_at",
-                "type": 4,
-                "typeName": "Timeslice"
               }
             ]
           }

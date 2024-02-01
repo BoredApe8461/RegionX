@@ -81,17 +81,17 @@ export default class Methods {
 	* listRegion
 	*
 	* @param { ArgumentTypes.Id } id,
-	* @param { (string | number | BN) } bitPrice,
+	* @param { (string | number | BN) } timeslicePrice,
 	* @param { ArgumentTypes.AccountId | null } saleRecepient,
 	* @returns { Result<Result<null, ReturnTypes.MarketError>, ReturnTypes.LangError> }
 	*/
 	"listRegion" (
 		id: ArgumentTypes.Id,
-		bitPrice: (string | number | BN),
+		timeslicePrice: (string | number | BN),
 		saleRecepient: ArgumentTypes.AccountId | null,
 		__options ? : GasLimitAndRequiredValue,
 	): Promise< QueryReturnType< Result<Result<null, ReturnTypes.MarketError>, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "listRegion", [id, bitPrice, saleRecepient], __options , (result) => { return handleReturnType(result, getTypeDescription(26, DATA_TYPE_DESCRIPTIONS)); });
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "listRegion", [id, timeslicePrice, saleRecepient], __options , (result) => { return handleReturnType(result, getTypeDescription(26, DATA_TYPE_DESCRIPTIONS)); });
 	}
 
 	/**
@@ -111,15 +111,15 @@ export default class Methods {
 	* updateRegionPrice
 	*
 	* @param { (string | number | BN) } regionId,
-	* @param { (string | number | BN) } newBitPrice,
+	* @param { (string | number | BN) } newTimeslicePrice,
 	* @returns { Result<Result<null, ReturnTypes.MarketError>, ReturnTypes.LangError> }
 	*/
 	"updateRegionPrice" (
 		regionId: (string | number | BN),
-		newBitPrice: (string | number | BN),
+		newTimeslicePrice: (string | number | BN),
 		__options ? : GasLimit,
 	): Promise< QueryReturnType< Result<Result<null, ReturnTypes.MarketError>, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "updateRegionPrice", [regionId, newBitPrice], __options , (result) => { return handleReturnType(result, getTypeDescription(26, DATA_TYPE_DESCRIPTIONS)); });
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "updateRegionPrice", [regionId, newTimeslicePrice], __options , (result) => { return handleReturnType(result, getTypeDescription(26, DATA_TYPE_DESCRIPTIONS)); });
 	}
 
 	/**

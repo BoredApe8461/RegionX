@@ -74,21 +74,21 @@ describe('Coretime market listing', () => {
 
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    const bitPrice = 50;
+    const timeslicePrice = 50;
     const result = await market
       .withSigner(alice)
-      .tx.listRegion(id, bitPrice, alice.address, { value: LISTING_DEPOIST });
+      .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
     expectEvent(result, 'RegionListed', {
       regionId: id.toPrimitive().u128,
-      bitPrice: bitPrice.toString(),
+      timeslicePrice: timeslicePrice.toString(),
       seller: alice.address,
       saleRecepient: alice.address.toString(),
       metadataVersion: 0,
     });
 
-    await expectOnSale(market, id, alice, bitPrice);
+    await expectOnSale(market, id, alice, timeslicePrice);
     expect((await market.query.regionPrice(id)).value.unwrap().ok.toNumber()).to.be.equal(
-      bitPrice * 80,
+      timeslicePrice * (region.getEnd() - region.getBegin()),
     );
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
   });
@@ -114,8 +114,8 @@ describe('Coretime market listing', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    const bitPrice = 50;
-    const result = market.withSigner(alice).query.listRegion(id, bitPrice, alice.address);
+    const timeslicePrice = 50;
+    const result = market.withSigner(alice).query.listRegion(id, timeslicePrice, alice.address);
     expect((await result).value.unwrap().err).to.deep.equal(MarketErrorBuilder.MissingDeposit());
   });
 
@@ -139,10 +139,10 @@ describe('Coretime market listing', () => {
 
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
 
-    const bitPrice = 50;
+    const timeslicePrice = 50;
     const result = await market
       .withSigner(alice)
-      .query.listRegion(id, bitPrice, alice.address, { value: LISTING_DEPOIST });
+      .query.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
     expect(result.value.unwrap().err).to.deep.equal(
       MarketErrorBuilder.XcRegionsPsp34Error(PSP34ErrorBuilder.NotApproved()),
     );
@@ -170,10 +170,10 @@ describe('Coretime market listing', () => {
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
     setTimeout(async () => {
-      const bitPrice = 50;
+      const timeslicePrice = 50;
       const result = await market
         .withSigner(alice)
-        .query.listRegion(id, bitPrice, alice.address, { value: LISTING_DEPOIST });
+        .query.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
       expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.RegionExpired());
     }, 6000);
   });

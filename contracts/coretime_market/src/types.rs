@@ -14,7 +14,7 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
 use openbrush::{contracts::traits::psp34::PSP34Error, traits::AccountId};
-use primitives::{coretime::Timeslice, Balance, Version};
+use primitives::{Balance, Version};
 use xc_regions::types::XcRegionsError;
 
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
@@ -67,14 +67,12 @@ impl core::fmt::Display for MarketError {
 pub struct Listing {
 	/// The `AccountId` selling the specific region.
 	pub seller: AccountId,
-	/// The bit price of a region.
-	pub bit_price: Balance,
+	/// The price per a single timeslice.
+	pub timeslice_price: Balance,
 	/// The `AccountId` receiving the payment from the sale.
 	///
 	/// If not set specified otherwise this should be the `seller` account.
 	pub sale_recepient: AccountId,
 	/// The metadata version of the region listed on sale. Used to prevent front running attacks.
 	pub metadata_version: Version,
-	/// The timeslice when the region was listed on sale.
-	pub listed_at: Timeslice,
 }

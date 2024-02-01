@@ -18,9 +18,9 @@
 //! This is the contract implementation of a Coretime marketplace working on top of the `XcRegions`
 //! contract.
 //!
-//! The contract employs a bit-based pricing model that determines the price of regions on sale,
-//! based on the value of a single core mask bit. This approach is useful as it allows us to emulate
-//! the expiring nature of Coretime.
+//! The contract employs a timeslice-based pricing model that determines the price of regions on
+//! sale, based on the value of a single timeslice. This approach is useful as it allows us to
+//! emulate the expiring nature of Coretime.
 //!
 //! ## Terminology:
 //!
@@ -49,7 +49,7 @@ pub mod coretime_market {
 	};
 	use openbrush::{contracts::traits::psp34::Id, storage::Mapping, traits::Storage};
 	use primitives::{
-		coretime::{RawRegionId, Region, Timeslice, TIMESLICE_PERIOD},
+		coretime::{RawRegionId, Region, Timeslice, CORE_MASK_BIT_LEN, TIMESLICE_PERIOD},
 		ensure, Version,
 	};
 	use sp_arithmetic::{traits::SaturatedConversion, FixedPointNumber, FixedU128};
@@ -79,8 +79,8 @@ pub mod coretime_market {
 		/// The identifier of the region that got listed on sale.
 		#[ink(topic)]
 		pub(crate) region_id: RawRegionId,
-		/// The bit price of the listed region.
-		pub(crate) bit_price: Balance,
+		/// The per timeslice price of the listed region.
+		pub(crate) timeslice_price: Balance,
 		/// The seller of the region
 		pub(crate) seller: AccountId,
 		/// The sale revenue recipient.
@@ -143,8 +143,7 @@ pub mod coretime_market {
 		/// ## Arguments:
 		/// - `region_id`: The `u128` encoded identifier of the region that the caller intends to
 		///   list for sale.
-		/// - `bit_price`: The price for the smallest unit of the region. This is the price for a
-		///   single bit of the region's coremask, i.e., 1/80th of the total price.
+		/// - `timeslice_price`: The price per a single timeslice.
 		/// - `sale_recepient`: The `AccountId` receiving the payment from the sale. If not
 		///   specified this will be the caller.
 		///
@@ -159,7 +158,7 @@ pub mod coretime_market {
 		pub fn list_region(
 			&mut self,
 			id: Id,
-			bit_price: Balance,
+			timeslice_price: Balance,
 			sale_recepient: Option<AccountId>,
 		) -> Result<(), MarketError> {
 			let caller = self.env().caller();
@@ -191,17 +190,16 @@ pub mod coretime_market {
 				&region_id,
 				&Listing {
 					seller: caller,
-					bit_price,
+					timeslice_price,
 					sale_recepient,
 					metadata_version: metadata.version,
-					listed_at: current_timeslice,
 				},
 			);
 			self.listed_regions.push(region_id);
 
 			self.emit_event(RegionListed {
 				region_id,
-				bit_price,
+				timeslice_price,
 				seller: caller,
 				sale_recepient,
 				metadata_version: metadata.version,
@@ -224,13 +222,12 @@ pub mod coretime_market {
 		///
 		/// ## Arguments:
 		/// - `region_id`: The `u128` encoded identifier of the region being listed for sale.
-		/// - `bit_price`: The new price for the smallest unit of the region. This is the price for
-		///   a single bit of the region's coremask, i.e., 1/80th of the total price.
+		/// - `timeslice_price`: The new per timeslice price of the region.
 		#[ink(message)]
 		pub fn update_region_price(
 			&self,
 			_region_id: RawRegionId,
-			_new_bit_price: Balance,
+			_new_timeslice_price: Balance,
 		) -> Result<(), MarketError> {
 			todo!()
 		}
@@ -266,13 +263,8 @@ pub mod coretime_market {
 			ensure!(listing.metadata_version == metadata_version, MarketError::MetadataNotMatching);
 
 			// Transfer the region to the buyer.
-			PSP34Ref::transfer(
-				&self.xc_regions_contract,
-				caller,
-				id.clone(),
-				Default::default(),
-			)
-			.map_err(MarketError::XcRegionsPsp34Error)?;
+			PSP34Ref::transfer(&self.xc_regions_contract, caller, id.clone(), Default::default())
+				.map_err(MarketError::XcRegionsPsp34Error)?;
 
 			// Remove the region from sale:
 
@@ -290,11 +282,7 @@ pub mod coretime_market {
 				.transfer(listing.sale_recepient, price)
 				.map_err(|_| MarketError::TransferFailed)?;
 
-			self.emit_event(RegionPurchased {
-				region_id,
-				buyer: caller,
-				total_price: price,
-			});
+			self.emit_event(RegionPurchased { region_id, buyer: caller, total_price: price });
 
 			Ok(())
 		}
@@ -309,28 +297,25 @@ pub mod coretime_market {
 		) -> Result<Balance, MarketError> {
 			let current_timeslice = self.current_timeslice();
 
+			let duration = region.end.saturating_sub(region.begin);
+
+			let core_occupancy =
+				FixedU128::checked_from_rational(region.mask.count_ones(), CORE_MASK_BIT_LEN)
+					.ok_or(MarketError::ArithmeticError)?;
+
+			let per_timeslice_price = (core_occupancy * listing.timeslice_price.into())
+				.into_inner()
+				.saturating_div(FixedU128::accuracy());
+
 			if current_timeslice < region.begin {
 				// The region didn't start yet, so there is no value lost.
-				let price = listing.bit_price.saturating_mul(region.mask.count_ones() as Balance);
+				let price = per_timeslice_price.saturating_mul(duration.into());
 
 				return Ok(price);
 			}
 
-			let duration = region.end.saturating_sub(region.begin);
-			let wasted_timeslices = current_timeslice.saturating_sub(region.begin);
-
-			let wasted_ratio = FixedU128::checked_from_rational(wasted_timeslices, duration)
-				.ok_or(MarketError::ArithmeticError)?;
-
-			let current_bit_index = wasted_ratio
-				.const_checked_mul(FixedU128::from_u32(TIMESLICE_PERIOD))
-				.ok_or(MarketError::ArithmeticError)?
-				.into_inner()
-				.saturating_div(FixedU128::accuracy());
-
-			let price = listing
-				.bit_price
-				.saturating_mul(region.mask.count_ones_from(current_bit_index as usize) as Balance);
+			let remaining_timeslices = region.end.saturating_sub(current_timeslice);
+			let price = per_timeslice_price.saturating_mul(remaining_timeslices.into());
 
 			Ok(price)
 		}

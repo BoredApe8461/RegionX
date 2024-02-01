@@ -29,6 +29,9 @@ pub type CoreIndex = u16;
 /// Duration of a timeslice in rc blocks.
 pub const TIMESLICE_PERIOD: BlockNumber = 80;
 
+/// The bit length of a core mask.
+pub const CORE_MASK_BIT_LEN: usize = 80;
+
 /// All Regions are also associated with a Core Mask, an 80-bit bitmap, to denote the regularity at
 /// which it may be scheduled on the core.
 #[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]

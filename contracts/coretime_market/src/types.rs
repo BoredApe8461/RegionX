@@ -24,8 +24,6 @@ pub enum MarketError {
 	ArithmeticError,
 	/// The provided identifier is not a valid region id.
 	InvalidRegionId,
-	/// The caller tried to provide invalid timeslice information.
-	InvalidTimeslice,
 	/// The specified region is expired.
 	RegionExpired,
 	/// The caller made the call without sending the required deposit amount.
@@ -49,7 +47,6 @@ impl core::fmt::Display for MarketError {
 		match self {
 			MarketError::ArithmeticError => write!(f, "ArithmeticError"),
 			MarketError::InvalidRegionId => write!(f, "InvalidRegionId"),
-			MarketError::InvalidTimeslice => write!(f, "InvalidTimeslice"),
 			MarketError::RegionExpired => write!(f, "RegionExpired"),
 			MarketError::MissingDeposit => write!(f, "MissingDeposit"),
 			MarketError::RegionNotListed => write!(f, "RegionNotListed"),

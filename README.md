@@ -63,17 +63,33 @@ cargo contract build --release
 
 4. Running e2e-tests
 
-   Considering that the xc-regions contract necessitates the underlying chain to implement the uniques pallet for running e2e tests, it is required to specify a custom contracts node. For this purpose, we utilize the Astar local node from [Coretime-Mock](https://github.com/RegionX-Labs/Coretime-Mock) directory:
+Considering that the xc-regions contract necessitates the underlying chain to implement the uniques pallet for running e2e tests, it is required to specify a custom contracts node. For this purpose, we utilize the Astar local node from [Coretime-Mock](https://github.com/RegionX-Labs/Coretime-Mock) directory:
 
-   ```sh
-   export CONTRACTS_NODE="~/Coretime-Mock/bin/astar-collator"
-   ```
+```sh
+export CONTRACTS_NODE="~/Coretime-Mock/bin/astar-collator"
+```
 
-   Once that is configured, we can proceed to run the e2e tests:"
+Once that is configured, we can proceed to run the e2e tests:"
 
-   ```sh
-   cargo test --features e2e-tests
-   ```
+```sh
+cargo test --features e2e-tests
+```
+
+Additionally, this repository contains e2e typescript tests, which can be run with the following steps:
+
+```sh
+# in a separate terminal run a the astar-collator node from Coretime-Mock 
+cd Coretime-Mock/
+./bin/astar-collator --dev
+```
+
+After the node is running in a separate terminal:
+```sh
+# generate the artifacts
+npm run compile
+
+npm run test
+```
 
 ## 4. Deploy
 
@@ -82,12 +98,12 @@ For the xc-regions contract to function correctly, the chain on which it is depl
 1. Determine the index of the uniques pallet
 2. Go to the `primitives/lib.rs` file:
 3. Configure the index correctly:
-   `rust
+```rust
 #[derive(scale::Encode, scale::Decode)]
 pub enum RuntimeCall {
 	// E.g: on shibuya this is 37. in local-runtime this is 30.
 	#[codec(index = <CORRECT PALLET INDEX>)]
 	Uniques(uniques::UniquesCall),
 }
-`
+```
    Once this is correctly configured, the contract can then be deployed.

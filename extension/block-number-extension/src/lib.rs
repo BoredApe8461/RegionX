@@ -17,15 +17,8 @@
 use openbrush::traits::BlockNumber;
 use scale::{Decode, Encode};
 
-/// These are only the functions that are essential for the xc-regions contract. However, the
-/// underlying chain extension is likely to implement many additional ones.
-///
-/// We will utilize the chain extension solely for state reads, as extrinsics can be executed
-/// through `call_runtime`, which is more future-proof approach.
-///
-/// Once WASM view functions are supported, there will no longer be a need for a chain extension.
 pub trait BlockNumberProviderExtension {
-	/// The owner of the specific item.
+	/// The relay chain block number. Useful for determining the current timeslice.
 	fn relay_chain_block_number(&self) -> Result<BlockNumber, BlockNumberProviderError> {
 		::ink::env::chain_extension::ChainExtensionMethod::build(0x50001)
 			.input::<()>()

@@ -51,11 +51,6 @@ impl CoreMask {
 	pub fn count_ones(&self) -> u32 {
 		self.0.iter().map(|i| i.count_ones()).sum()
 	}
-	fn is_bit_set(&self, index: usize) -> bool {
-		let byte_index = index / 8;
-		let bit_index = index % 8;
-		(self.0[byte_index] & (1 << bit_index)) != 0
-	}
 	pub fn from_chunk(from: u32, to: u32) -> Self {
 		let mut v = [0u8; 10];
 		for i in (from.min(80) as usize)..(to.min(80) as usize) {

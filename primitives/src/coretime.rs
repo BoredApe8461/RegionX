@@ -51,15 +51,6 @@ impl CoreMask {
 	pub fn count_ones(&self) -> u32 {
 		self.0.iter().map(|i| i.count_ones()).sum()
 	}
-	// TODO: write test
-	pub fn count_zeros_from(&self, from: usize) -> u32 {
-		let total_bits = self.0.len() * 8;
-		(from..total_bits).filter(|&i| !self.is_bit_set(i)).count() as u32
-	}
-	pub fn count_ones_from(&self, from: usize) -> u32 {
-		let total_bits = self.0.len() * 8;
-		(from..total_bits).filter(|&i| self.is_bit_set(i)).count() as u32
-	}
 	fn is_bit_set(&self, index: usize) -> bool {
 		let byte_index = index / 8;
 		let bit_index = index % 8;

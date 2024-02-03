@@ -6,8 +6,8 @@ license = "GPL-3.0-only"
 
 [workspace]
 members = [
-    "contracts/xc-regions",
-    "contracts/coretime-market", 
+    "contracts/xc_regions",
+    "contracts/coretime_market", 
     "environment", 
     "primitives",
     "extension",

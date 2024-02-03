@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "types": ["mocha", "node"],
+    "resolveJsonModule": true
+  },
+  "include": ["tests/**/*.ts"],
+  "exclude": ["node_modules/"]
+}

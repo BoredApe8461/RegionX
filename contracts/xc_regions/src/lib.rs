@@ -16,14 +16,16 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![feature(min_specialization)]
 
-mod traits;
-mod types;
+pub mod traits;
+pub mod types;
 
 #[cfg(test)]
 mod tests;
 
+pub use crate::xc_regions::PSP34Ref;
+
 // NOTE: This should be the collection ID of the underlying region collection.
-const REGIONS_COLLECTION_ID: u32 = 42;
+pub const REGIONS_COLLECTION_ID: u32 = 42;
 
 #[openbrush::implementation(PSP34, PSP34Enumerable)]
 #[openbrush::contract(env = environment::ExtendedEnvironment)]
@@ -48,6 +50,9 @@ pub mod xc_regions {
 
 	#[cfg(test)]
 	use primitives::uniques::CollectionId;
+
+	#[openbrush::wrapper]
+	pub type PSP34Ref = dyn PSP34 + PSP34Enumerable;
 
 	#[ink(storage)]
 	#[derive(Default, Storage)]

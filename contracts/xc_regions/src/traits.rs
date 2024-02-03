@@ -13,28 +13,21 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std, no_main)]
-#![feature(min_specialization)]
+use crate::types::{VersionedRegion, XcRegionsError};
+use primitives::coretime::{RawRegionId, Region};
 
-#[openbrush::contract]
-pub mod coretime_market {
-	use openbrush::traits::Storage;
+#[openbrush::wrapper]
+pub type RegionMetadataRef = dyn RegionMetadata;
 
-	#[ink(storage)]
-	#[derive(Default, Storage)]
-	pub struct CoretimeMarket {
-		// FIXME: ink! smart contract boilerplate
-		foo: u8,
-	}
+/// This is based on: `<https://hackmd.io/@Szegoo/rkryxwdIp>`
+#[openbrush::trait_definition]
+pub trait RegionMetadata {
+	#[ink(message)]
+	fn init(&mut self, id: RawRegionId, metadata: Region) -> Result<(), XcRegionsError>;
 
-	impl CoretimeMarket {
-		#[ink(constructor)]
-		pub fn new() -> Self {
-			Default::default()
-		}
+	#[ink(message)]
+	fn get_metadata(&self, id: RawRegionId) -> Result<VersionedRegion, XcRegionsError>;
 
-		// FIXME: ink! smart contract boilerplate
-		#[ink(message)]
-		pub fn foo(&self) {}
-	}
+	#[ink(message)]
+	fn remove(&mut self, id: RawRegionId) -> Result<(), XcRegionsError>;
 }

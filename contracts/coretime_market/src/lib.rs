@@ -90,6 +90,15 @@ pub mod coretime_market {
 	}
 
 	#[ink(event)]
+	pub struct RegionUnlisted {
+		/// The identifier of the region that got listed on sale.
+		#[ink(topic)]
+		pub(crate) region_id: RawRegionId,
+		/// The account that removed the region from sale.
+		pub(crate) caller: AccountId,
+	}
+
+	#[ink(event)]
 	pub struct RegionPurchased {
 		/// The identifier of the region that got listed on sale.
 		#[ink(topic)]
@@ -213,9 +222,39 @@ pub mod coretime_market {
 		/// ## Arguments:
 		/// - `region_id`: The `u128` encoded identifier of the region that the caller intends to
 		///   unlist from sale.
+		///
+		/// In case the regino is expired, this is callable by anyone and the caller will receive
+		/// the listing deposit as a reward.
 		#[ink(message)]
-		pub fn unlist_region(&self, _region_id: RawRegionId) -> Result<(), MarketError> {
-			todo!()
+		pub fn unlist_region(&mut self, id: Id) -> Result<(), MarketError> {
+			let caller = self.env().caller();
+
+			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
+
+			let listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
+			let metadata = RegionMetadataRef::get_metadata(&self.xc_regions_contract, region_id)
+				.map_err(MarketError::XcRegionsMetadataError)?;
+
+			let current_timeslice = self.current_timeslice();
+
+			// If the region is expired this is callable by anyone, otherwise only the seller can
+			// unlist the region from the market.
+			ensure!(
+				caller == listing.seller || current_timeslice > metadata.region.end,
+				MarketError::NotAllowed
+			);
+
+			// Remove the region from sale:
+			self.remove_from_sale(region_id)?;
+
+			// Reward the caller with listing deposit.
+			self.env()
+				.transfer(caller, self.listing_deposit)
+				.map_err(|_| MarketError::TransferFailed)?;
+
+			self.emit_event(RegionUnlisted { region_id, caller });
+
+			Ok(())
 		}
 
 		/// A function for updating a listed region's bit price.
@@ -267,15 +306,7 @@ pub mod coretime_market {
 				.map_err(MarketError::XcRegionsPsp34Error)?;
 
 			// Remove the region from sale:
-
-			let region_index = self
-				.listed_regions
-				.iter()
-				.position(|r| *r == region_id)
-				.ok_or(MarketError::RegionNotListed)?;
-
-			self.listed_regions.remove(region_index);
-			self.listings.remove(&region_id);
+			self.remove_from_sale(region_id)?;
 
 			// Transfer the tokens to the sale recipient.
 			self.env()
@@ -318,6 +349,20 @@ pub mod coretime_market {
 			let price = per_timeslice_price.saturating_mul(remaining_timeslices.into());
 
 			Ok(price)
+		}
+
+		// Remove a region from sale
+		fn remove_from_sale(&mut self, region_id: RawRegionId) -> Result<(), MarketError> {
+			let region_index = self
+				.listed_regions
+				.iter()
+				.position(|r| *r == region_id)
+				.ok_or(MarketError::RegionNotListed)?;
+
+			self.listed_regions.remove(region_index);
+			self.listings.remove(&region_id);
+
+			Ok(())
 		}
 
 		#[cfg(not(test))]

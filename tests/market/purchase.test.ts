@@ -111,6 +111,8 @@ describe('Coretime market purchases', () => {
     );
     // Alice's balance is increased.
     expect(await balanceOf(api, alice.address)).to.be.greaterThan(aliceBalance);
+
+    // TODO: ensure the region is removed from sale:
   });
 
   it('Purchasing fails when insufficient value is sent', async () => {

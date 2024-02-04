@@ -36,6 +36,8 @@ pub enum MarketError {
 	MetadataNotMatching,
 	/// Failed to transfer the tokens to the seller.
 	TransferFailed,
+	/// The caller tried to perform an operation that they have no permission for.
+	NotAllowed,
 	/// An error occured when calling the xc-regions contract through the psp34 interface.
 	XcRegionsPsp34Error(PSP34Error),
 	/// An error occured when calling the xc-regions contract through the metadata interface.
@@ -53,6 +55,7 @@ impl core::fmt::Display for MarketError {
 			MarketError::InsufficientFunds => write!(f, "InsufficientFunds"),
 			MarketError::MetadataNotMatching => write!(f, "MetadataNotMatching"),
 			MarketError::TransferFailed => write!(f, "TransferFailed"),
+			MarketError::NotAllowed => write!(f, "NotAllowed"),
 			MarketError::XcRegionsPsp34Error(e) => write!(f, "{:?}", e),
 			MarketError::XcRegionsMetadataError(e) => write!(f, "{}", e),
 		}

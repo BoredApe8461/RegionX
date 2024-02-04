@@ -112,7 +112,9 @@ describe('Coretime market purchases', () => {
     // Alice's balance is increased.
     expect(await balanceOf(api, alice.address)).to.be.greaterThan(aliceBalance);
 
-    // TODO: ensure the region is removed from sale:
+    // Ensure the region is removed from sale:
+    expect(market.query.listedRegions()).to.eventually.be.equal([]);
+    expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
   });
 
   it('Purchasing fails when insufficient value is sent', async () => {
@@ -227,5 +229,9 @@ describe('Coretime market purchases', () => {
     expect(await balanceOf(api, charlie.address)).to.be.equal(
       charlieBalance + timeslicePrice * (region.getEnd() - region.getBegin()),
     );
+
+    // Ensure the region is removed from sale:
+    expect(market.query.listedRegions()).to.eventually.be.equal([]);
+    expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
   });
 });

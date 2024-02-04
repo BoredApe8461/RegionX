@@ -244,6 +244,10 @@ pub mod coretime_market {
 				MarketError::NotAllowed
 			);
 
+			// Transfer the region to the seller.
+			PSP34Ref::transfer(&self.xc_regions_contract, listing.seller, id.clone(), Default::default())
+				.map_err(MarketError::XcRegionsPsp34Error)?;
+
 			// Remove the region from sale:
 			self.remove_from_sale(region_id)?;
 

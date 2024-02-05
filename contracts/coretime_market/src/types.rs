@@ -13,9 +13,24 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
-use openbrush::{contracts::traits::psp34::PSP34Error, traits::AccountId};
+use openbrush::{
+	contracts::traits::psp34::PSP34Error,
+	traits::{AccountId, BlockNumber},
+};
 use primitives::{Balance, Version};
 use xc_regions::types::XcRegionsError;
+
+/// The configuration of the coretime market
+#[derive(scale::Decode, scale::Encode, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
+pub struct Config {
+	/// The `AccountId` of the xc-regions contract.
+	pub xc_regions_contract: AccountId,
+	/// The deposit required to list a region on sale.
+	pub listing_deposit: Balance,
+	/// The duration of a timeslice in block numbers.
+	pub timeslice_period: BlockNumber,
+}
 
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]

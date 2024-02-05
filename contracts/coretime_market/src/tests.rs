@@ -10,7 +10,7 @@ use primitives::coretime::{CoreMask, Region, Timeslice, TIMESLICE_PERIOD};
 fn calculate_region_price_works() {
 	let DefaultAccounts::<DefaultEnvironment> { charlie, .. } = get_default_accounts();
 
-	let market = CoretimeMarket::new(charlie, 0);
+	let market = CoretimeMarket::new(charlie, 0, TIMESLICE_PERIOD);
 	// Works for regions which haven't yet started.
 
 	// complete coremask, so 80 active bits.

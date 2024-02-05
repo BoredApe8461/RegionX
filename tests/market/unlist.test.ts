@@ -15,6 +15,7 @@ import {
   expectOnSale,
   initRegion,
   mintRegion,
+  wait,
 } from '../common';
 import { MarketErrorBuilder } from '../../types/types-returns/coretime_market';
 
@@ -99,9 +100,8 @@ describe('Coretime market unlisting', () => {
     expect(market.query.listedRegions()).to.eventually.be.equal([]);
     expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
 
-    // The caller receives the deposit back.
-    // TODO fix:
-    //expect(await balanceOf(api, alice.address)).to.be.greaterThan(aliceBalance - LISTING_DEPOIST);
+    // Alice receives the region back:
+    expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(alice.address);
   });
 
   it('Unlisting not listed region fails', async () => {
@@ -129,7 +129,7 @@ describe('Coretime market unlisting', () => {
     expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.RegionNotListed());
   });
 
-  it('Only owner can unlisting unexpired region', async () => {
+  it('Only owner can unlist unexpired region', async () => {
     const regionId: RegionId = {
       begin: 30,
       core: 22,
@@ -170,5 +170,58 @@ describe('Coretime market unlisting', () => {
     // Ensure the region is removed from sale:
     expect(market.query.listedRegions()).to.eventually.be.equal([]);
     expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
+
+    // Alice receives the region back:
+    expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(alice.address);
+  });
+
+  it('Anyone can unlist an expired region', async () => {
+    const regionId: RegionId = {
+      begin: 0,
+      core: 23,
+      mask: CoreMask.completeMask(),
+    };
+    const regionRecord: RegionRecord = {
+      end: 1,
+      owner: alice.address,
+      paid: null,
+    };
+    const region = new Region(regionId, regionRecord);
+
+    await mintRegion(api, alice, region);
+    await approveTransfer(api, alice, region, xcRegions.address);
+
+    await initRegion(api, xcRegions, alice, region);
+
+    const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
+    await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
+
+    const timeslicePrice = 5 * Math.pow(10, 12);
+    await market
+      .withSigner(alice)
+      .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
+
+    await expectOnSale(market, id, alice, timeslicePrice);
+    expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
+    /*
+
+    const bobBalance = await balanceOf(api, bob.address);
+
+    const result = await market.withSigner(bob).tx.unlistRegion(id);
+    expectEvent(result, 'RegionUnlisted', {
+      regionId: id.toPrimitive().u128,
+      caller: bob.address,
+    });
+
+    // Ensure the region is removed from sale:
+    expect(market.query.listedRegions()).to.eventually.be.equal([]);
+    expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
+
+    // Alice receives the region back:
+    expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(alice.address);
+
+    // Bob receives the listing deposit:
+    expect(await balanceOf(api, bob.address)).to.be.eq(bobBalance + LISTING_DEPOIST);
+    */
   });
 });

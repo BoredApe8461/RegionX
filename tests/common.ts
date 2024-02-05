@@ -126,3 +126,5 @@ export async function balanceOf(api: ApiPromise, acc: string): Promise<number> {
 export function parseHNString(str: string): number {
   return parseInt(str.replace(/,/g, ''));
 }
+
+export const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));

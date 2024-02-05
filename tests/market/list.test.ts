@@ -16,12 +16,15 @@ import {
   expectOnSale,
   initRegion,
   mintRegion,
+  wait,
 } from '../common';
 
 use(chaiAsPromised);
 
 const REGION_COLLECTION_ID = 42;
 const LISTING_DEPOIST = 100;
+// Set to only one relay 
+const TIMIESLICE_PERIOD = 80;
 
 const wsProvider = new WsProvider('ws://127.0.0.1:9944');
 // Create a keyring instance
@@ -175,12 +178,12 @@ describe('Coretime market listing', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    setTimeout(async () => {
-      const timeslicePrice = 50;
-      const result = await market
-        .withSigner(alice)
-        .query.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
-      expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.RegionExpired());
-    }, 6000);
+    await wait(6000);
+
+    const timeslicePrice = 50;
+    const result = await market
+      .withSigner(alice)
+      .query.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
+    expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.RegionExpired());
   });
 });

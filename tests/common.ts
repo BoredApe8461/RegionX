@@ -9,8 +9,6 @@ import { Region } from 'coretime-utils';
 const REGION_COLLECTION_ID = 42;
 
 export async function createRegionCollection(api: ApiPromise, caller: KeyringPair): Promise<void> {
-  console.log(`Creating the region collection`);
-
   const createCollectionCall = api.tx.uniques.create(REGION_COLLECTION_ID, caller.address);
 
   const callTx = async (resolve: () => void, reject: ({ reason }) => void) => {
@@ -49,8 +47,6 @@ export async function mintRegion(
   caller: KeyringPair,
   region: Region,
 ): Promise<void> {
-  console.log(`Minting a region`);
-
   const rawRegionId = region.getEncodedRegionId(api);
   const mintCall = api.tx.uniques.mint(REGION_COLLECTION_ID, rawRegionId, caller.address);
 
@@ -76,8 +72,6 @@ export async function approveTransfer(
   region: Region,
   delegate: string,
 ): Promise<void> {
-  console.log(`Approving region to ${delegate}`);
-
   const rawRegionId = region.getEncodedRegionId(api);
   const approveCall = api.tx.uniques.approveTransfer(REGION_COLLECTION_ID, rawRegionId, delegate);
 
@@ -129,6 +123,13 @@ export async function balanceOf(api: ApiPromise, acc: string): Promise<number> {
   return parseHNString(account.data.free);
 }
 
+export async function getBlockNumber(api: ApiPromise): Promise<number> {
+  const num = (await api.query.system.number()).toHuman();
+  return parseHNString(num.toString());
+}
+
 export function parseHNString(str: string): number {
   return parseInt(str.replace(/,/g, ''));
 }
+
+export const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));

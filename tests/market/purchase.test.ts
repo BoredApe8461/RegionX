@@ -22,6 +22,8 @@ use(chaiAsPromised);
 
 const REGION_COLLECTION_ID = 42;
 const LISTING_DEPOIST = 0;
+// In reality this is 80, however we use 8 for testing.
+const TIMESLICE_PERIOD = 8;
 
 const wsProvider = new WsProvider('ws://127.0.0.1:9944');
 // Create a keyring instance
@@ -48,7 +50,7 @@ describe('Coretime market purchases', () => {
 
     const marketFactory = new Market_Factory(api, alice);
     market = new Market(
-      (await marketFactory.new(xcRegions.address, LISTING_DEPOIST)).address,
+      (await marketFactory.new(xcRegions.address, LISTING_DEPOIST, TIMESLICE_PERIOD)).address,
       alice,
       api,
     );

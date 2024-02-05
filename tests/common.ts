@@ -123,6 +123,11 @@ export async function balanceOf(api: ApiPromise, acc: string): Promise<number> {
   return parseHNString(account.data.free);
 }
 
+export async function getBlockNumber(api: ApiPromise): Promise<number> {
+  const num = (await api.query.system.number()).toHuman();
+  return parseHNString(num.toString());
+}
+
 export function parseHNString(str: string): number {
   return parseInt(str.replace(/,/g, ''));
 }

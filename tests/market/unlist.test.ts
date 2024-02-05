@@ -13,6 +13,7 @@ import {
   createRegionCollection,
   expectEvent,
   expectOnSale,
+  getBlockNumber,
   initRegion,
   mintRegion,
   wait,
@@ -23,6 +24,8 @@ use(chaiAsPromised);
 
 const REGION_COLLECTION_ID = 42;
 const LISTING_DEPOIST = 5 * Math.pow(10, 15);
+// In reality this is 80, however we use 8 for testing.
+const TIMESLICE_PERIOD = 8;
 
 const wsProvider = new WsProvider('ws://127.0.0.1:9944');
 // Create a keyring instance
@@ -47,7 +50,7 @@ describe('Coretime market unlisting', () => {
 
     const marketFactory = new Market_Factory(api, alice);
     market = new Market(
-      (await marketFactory.new(xcRegions.address, LISTING_DEPOIST)).address,
+      (await marketFactory.new(xcRegions.address, LISTING_DEPOIST, TIMESLICE_PERIOD)).address,
       alice,
       api,
     );
@@ -182,7 +185,7 @@ describe('Coretime market unlisting', () => {
       mask: CoreMask.completeMask(),
     };
     const regionRecord: RegionRecord = {
-      end: 1,
+      end: 5,
       owner: alice.address,
       paid: null,
     };
@@ -203,9 +206,9 @@ describe('Coretime market unlisting', () => {
 
     await expectOnSale(market, id, alice, timeslicePrice);
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
-    /*
 
-    const bobBalance = await balanceOf(api, bob.address);
+    // Wait for the region to expire.
+    await wait(2000 * region.getEnd() * TIMESLICE_PERIOD);
 
     const result = await market.withSigner(bob).tx.unlistRegion(id);
     expectEvent(result, 'RegionUnlisted', {
@@ -220,8 +223,6 @@ describe('Coretime market unlisting', () => {
     // Alice receives the region back:
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(alice.address);
 
-    // Bob receives the listing deposit:
-    expect(await balanceOf(api, bob.address)).to.be.eq(bobBalance + LISTING_DEPOIST);
-    */
+    // TODO: should ideally ensure that bob received the reward.
   });
 });

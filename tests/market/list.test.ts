@@ -23,8 +23,8 @@ use(chaiAsPromised);
 
 const REGION_COLLECTION_ID = 42;
 const LISTING_DEPOIST = 100;
-// Set to only one relay 
-const TIMIESLICE_PERIOD = 80;
+// In reality this is 80, however we use 8 for testing.
+const TIMESLICE_PERIOD = 8;
 
 const wsProvider = new WsProvider('ws://127.0.0.1:9944');
 // Create a keyring instance
@@ -47,7 +47,7 @@ describe('Coretime market listing', () => {
 
     const marketFactory = new Market_Factory(api, alice);
     market = new Market(
-      (await marketFactory.new(xcRegions.address, LISTING_DEPOIST)).address,
+      (await marketFactory.new(xcRegions.address, LISTING_DEPOIST, TIMESLICE_PERIOD)).address,
       alice,
       api,
     );
@@ -178,7 +178,8 @@ describe('Coretime market listing', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    await wait(6000);
+    // Wait for the region to expire.
+    await wait(2000 * TIMESLICE_PERIOD);
 
     const timeslicePrice = 50;
     const result = await market

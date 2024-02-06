@@ -13,17 +13,15 @@ import {
   createRegionCollection,
   expectEvent,
   expectOnSale,
-  getBlockNumber,
   initRegion,
   mintRegion,
-  wait,
 } from '../common';
 import { MarketErrorBuilder } from '../../types/types-returns/coretime_market';
 
 use(chaiAsPromised);
 
 const REGION_COLLECTION_ID = 42;
-const LISTING_DEPOIST = 5 * Math.pow(10, 15);
+const LISTING_DEPOIST = 0;
 // In reality this is 80, however we use 8 for testing.
 const TIMESLICE_PERIOD = 8;
 
@@ -31,10 +29,11 @@ const wsProvider = new WsProvider('ws://127.0.0.1:9944');
 // Create a keyring instance
 const keyring = new Keyring({ type: 'sr25519', ss58Format: 5 });
 
-describe('Coretime market unlisting', () => {
+describe('Coretime market purchases', () => {
   let api: ApiPromise;
   let alice: KeyringPair;
   let bob: KeyringPair;
+  let charlie: KeyringPair;
 
   let xcRegions: XcRegions;
   let market: Market;
@@ -44,6 +43,7 @@ describe('Coretime market unlisting', () => {
 
     alice = keyring.addFromUri('//Alice');
     bob = keyring.addFromUri('//Bob');
+    charlie = keyring.addFromUri('//Charlie');
 
     const xcRegionsFactory = new XcRegions_Factory(api, alice);
     xcRegions = new XcRegions((await xcRegionsFactory.new()).address, alice, api);
@@ -60,10 +60,10 @@ describe('Coretime market unlisting', () => {
     }
   });
 
-  it('Unlisting works', async () => {
+  it('Updating price works', async () => {
     const regionId: RegionId = {
       begin: 30,
-      core: 20,
+      core: 40,
       mask: CoreMask.completeMask(),
     };
     const regionRecord: RegionRecord = {
@@ -80,8 +80,6 @@ describe('Coretime market unlisting', () => {
 
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
-
-    const aliceBalance = await balanceOf(api, alice.address);
 
     const timeslicePrice = 5 * Math.pow(10, 12);
     await market
@@ -89,28 +87,28 @@ describe('Coretime market unlisting', () => {
       .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
 
     await expectOnSale(market, id, alice, timeslicePrice);
+    expect((await market.query.regionPrice(id)).value.unwrap().unwrap().toNumber()).to.be.equal(
+      timeslicePrice * (region.getEnd() - region.getBegin()),
+    );
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
 
-    expect(await balanceOf(api, alice.address)).to.be.lessThan(aliceBalance - LISTING_DEPOIST);
+    const newTimeslicePrice = 6 * Math.pow(10, 12);
 
-    const result = await market.withSigner(alice).tx.unlistRegion(id);
-    expectEvent(result, 'RegionUnlisted', {
+    const result = await market.withSigner(alice).tx.updateRegionPrice(id, newTimeslicePrice);
+    expectEvent(result, 'RegionPriceUpdated', {
       regionId: id.toPrimitive().u128,
-      caller: alice.address,
+      newTimeslicePrice: newTimeslicePrice.toString(),
     });
-
-    // Ensure the region is removed from sale:
-    expect(market.query.listedRegions()).to.eventually.be.equal([]);
-    expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
-
-    // Alice receives the region back:
-    expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(alice.address);
+    await expectOnSale(market, id, alice, newTimeslicePrice);
+    expect((await market.query.regionPrice(id)).value.unwrap().unwrap().toNumber()).to.be.equal(
+      newTimeslicePrice * (region.getEnd() - region.getBegin()),
+    );
   });
 
-  it('Unlisting not listed region fails', async () => {
+  it('Cannot update price for unlisted region', async () => {
     const regionId: RegionId = {
       begin: 30,
-      core: 21,
+      core: 41,
       mask: CoreMask.completeMask(),
     };
     const regionRecord: RegionRecord = {
@@ -128,14 +126,17 @@ describe('Coretime market unlisting', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    const result = await market.withSigner(alice).query.unlistRegion(id);
+    const newTimeslicePrice = 6 * Math.pow(10, 12);
+
+    const result = await market.withSigner(alice).query.updateRegionPrice(id, newTimeslicePrice);
+
     expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.RegionNotListed());
   });
 
-  it('Only owner can unlist unexpired region', async () => {
+  it('Only owner can update the price', async () => {
     const regionId: RegionId = {
       begin: 30,
-      core: 22,
+      core: 42,
       mask: CoreMask.completeMask(),
     };
     const regionRecord: RegionRecord = {
@@ -153,78 +154,21 @@ describe('Coretime market unlisting', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    const timeslicePrice = 5 * Math.pow(10, 12);
+    const timeslicePrice = 7 * Math.pow(10, 12);
     await market
       .withSigner(alice)
       .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
 
     await expectOnSale(market, id, alice, timeslicePrice);
+    expect((await market.query.regionPrice(id)).value.unwrap().unwrap().toNumber()).to.be.equal(
+      timeslicePrice * (region.getEnd() - region.getBegin()),
+    );
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
 
-    const bobUnlistResult = await market.withSigner(bob).query.unlistRegion(id);
-    expect(bobUnlistResult.value.unwrap().err).to.deep.equal(MarketErrorBuilder.NotAllowed());
+    const newTimeslicePrice = 6 * Math.pow(10, 12);
 
-    const aliceUnlistResult = await market.withSigner(alice).tx.unlistRegion(id);
-    expectEvent(aliceUnlistResult, 'RegionUnlisted', {
-      regionId: id.toPrimitive().u128,
-      caller: alice.address,
-    });
+    const result = await market.withSigner(bob).query.updateRegionPrice(id, newTimeslicePrice);
 
-    // Ensure the region is removed from sale:
-    expect(market.query.listedRegions()).to.eventually.be.equal([]);
-    expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
-
-    // Alice receives the region back:
-    expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(alice.address);
+    expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.NotAllowed());
   });
-
-  /* TODO: Come up with a better way to test this.
-  it('Anyone can unlist an expired region', async () => {
-    const regionId: RegionId = {
-      begin: 0,
-      core: 23,
-      mask: CoreMask.completeMask(),
-    };
-    const regionRecord: RegionRecord = {
-      end: 5,
-      owner: alice.address,
-      paid: null,
-    };
-    const region = new Region(regionId, regionRecord);
-
-    await mintRegion(api, alice, region);
-    await approveTransfer(api, alice, region, xcRegions.address);
-
-    await initRegion(api, xcRegions, alice, region);
-
-    const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
-    await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
-
-    const timeslicePrice = 5 * Math.pow(10, 12);
-    await market
-      .withSigner(alice)
-      .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
-
-    await expectOnSale(market, id, alice, timeslicePrice);
-    expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
-
-    // Wait for the region to expire.
-    await wait(2000 * region.getEnd() * TIMESLICE_PERIOD);
-
-    const result = await market.withSigner(bob).tx.unlistRegion(id);
-    expectEvent(result, 'RegionUnlisted', {
-      regionId: id.toPrimitive().u128,
-      caller: bob.address,
-    });
-
-    // Ensure the region is removed from sale:
-    expect(market.query.listedRegions()).to.eventually.be.equal([]);
-    expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
-
-    // Alice receives the region back:
-    expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(alice.address);
-
-    // TODO: should ideally ensure that bob received the reward.
-  });
-  */
 });

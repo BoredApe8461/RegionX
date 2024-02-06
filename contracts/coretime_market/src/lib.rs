@@ -84,7 +84,7 @@ pub mod coretime_market {
 
 	#[ink(event)]
 	pub struct RegionUnlisted {
-		/// The identifier of the region that got listed on sale.
+		/// The identifier of the region that got unlisted from sale.
 		#[ink(topic)]
 		pub(crate) region_id: RawRegionId,
 		/// The account that removed the region from sale.
@@ -93,13 +93,22 @@ pub mod coretime_market {
 
 	#[ink(event)]
 	pub struct RegionPurchased {
-		/// The identifier of the region that got listed on sale.
+		/// The identifier of the region that got purchased.
 		#[ink(topic)]
 		pub(crate) region_id: RawRegionId,
 		/// The buyer of the region
 		pub(crate) buyer: AccountId,
 		/// The total price paid for the listed region.
 		pub(crate) total_price: Balance,
+	}
+
+	#[ink(event)]
+	pub struct RegionPriceUpdated {
+		/// The identifier of the region that got its price updated.
+		#[ink(topic)]
+		pub(crate) region_id: RawRegionId,
+		/// The new per timeslice price.
+		pub(crate) new_timeslice_price: Balance,
 	}
 
 	impl CoretimeMarket {
@@ -270,18 +279,30 @@ pub mod coretime_market {
 			Ok(())
 		}
 
-		/// A function for updating a listed region's bit price.
+		/// A function for updating a listed region's price.
 		///
 		/// ## Arguments:
 		/// - `region_id`: The `u128` encoded identifier of the region being listed for sale.
 		/// - `timeslice_price`: The new per timeslice price of the region.
 		#[ink(message)]
 		pub fn update_region_price(
-			&self,
-			_region_id: RawRegionId,
-			_new_timeslice_price: Balance,
+			&mut self,
+			id: Id,
+			new_timeslice_price: Balance,
 		) -> Result<(), MarketError> {
-			todo!()
+			let caller = self.env().caller();
+
+			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
+
+			let mut listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
+
+			ensure!(caller == listing.seller, MarketError::NotAllowed);
+
+			listing.timeslice_price = new_timeslice_price;
+			self.listings.insert(&region_id, &listing);
+
+			self.emit_event(RegionPriceUpdated { region_id, new_timeslice_price });
+			Ok(())
 		}
 
 		/// A function for purchasing a region listed on sale.

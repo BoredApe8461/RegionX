@@ -93,7 +93,7 @@ describe('Coretime market listing', () => {
     });
 
     await expectOnSale(market, id, alice, timeslicePrice);
-    expect((await market.query.regionPrice(id)).value.unwrap().ok.toNumber()).to.be.equal(
+    expect((await market.query.regionPrice(id)).value.unwrap().unwrap().toNumber()).to.be.equal(
       timeslicePrice * (region.getEnd() - region.getBegin()),
     );
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);

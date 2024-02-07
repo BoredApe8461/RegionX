@@ -19,6 +19,8 @@ use primitives::{coretime::Region, Version};
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub enum XcRegionsError {
+	/// The provided identifier is not a valid region id.
+	InvalidRegionId,
 	/// The metadata is either already initialized or the caller isn't the region owner.
 	CannotInitialize,
 	/// The region metadata cannot be removed as long as the underlying region continues to exist
@@ -39,6 +41,7 @@ pub enum XcRegionsError {
 impl core::fmt::Display for XcRegionsError {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		match self {
+			XcRegionsError::InvalidRegionId => write!(f, "InvalidRegionId"),
 			XcRegionsError::CannotInitialize => write!(f, "CannotInitialize"),
 			XcRegionsError::CannotRemove => write!(f, "CannotRemove"),
 			XcRegionsError::MetadataNotFound => write!(f, "MetadataNotFound"),

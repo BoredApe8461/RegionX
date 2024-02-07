@@ -130,12 +130,10 @@ pub mod xc_regions {
 		/// ## Events:
 		/// On success this ink message emits the `RegionInitialized` event.
 		#[ink(message)]
-		fn init(
-			&mut self,
-			raw_region_id: RawRegionId,
-			region: Region,
-		) -> Result<(), XcRegionsError> {
+		fn init(&mut self, id: Id, region: Region) -> Result<(), XcRegionsError> {
 			let caller = self.env().caller();
+
+			let Id::U128(raw_region_id) = id else { return Err(XcRegionsError::InvalidRegionId) };
 			ensure!(
 				Some(caller) == self._uniques_owner(raw_region_id),
 				XcRegionsError::CannotInitialize
@@ -185,7 +183,8 @@ pub mod xc_regions {
 		/// ## Arguments:
 		/// - `raw_region_id` - The `u128` encoded region identifier.
 		#[ink(message)]
-		fn get_metadata(&self, region_id: RawRegionId) -> Result<VersionedRegion, XcRegionsError> {
+		fn get_metadata(&self, id: Id) -> Result<VersionedRegion, XcRegionsError> {
+			let Id::U128(region_id) = id else { return Err(XcRegionsError::InvalidRegionId) };
 			let Some(region) = self.regions.get(region_id) else {
 				return Err(XcRegionsError::MetadataNotFound)
 			};
@@ -212,8 +211,8 @@ pub mod xc_regions {
 		/// ## Events:
 		/// On success this ink message emits the `RegionRemoved` event.
 		#[ink(message)]
-		fn remove(&mut self, region_id: RawRegionId) -> Result<(), XcRegionsError> {
-			let id = Id::U128(region_id);
+		fn remove(&mut self, id: Id) -> Result<(), XcRegionsError> {
+			let Id::U128(region_id) = id else { return Err(XcRegionsError::InvalidRegionId) };
 			let owner =
 				psp34::PSP34Impl::owner_of(self, id.clone()).ok_or(XcRegionsError::CannotRemove)?;
 
@@ -368,7 +367,7 @@ pub mod xc_regions {
 			let init = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
 				contract_acc_id.clone(),
 			)
-			.call(|xc_regions| xc_regions.init(raw_region_id, region.clone()));
+			.call(|xc_regions| xc_regions.init(Id::U128(raw_region_id), region.clone()));
 			let init_result = client.call_dry_run(&ink_e2e::alice(), &init, 0, None).await;
 			assert_eq!(init_result.return_value(), Err(XcRegionsError::CannotInitialize));
 
@@ -422,7 +421,7 @@ pub mod xc_regions {
 			let init = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
 				contract_acc_id.clone(),
 			)
-			.call(|xc_regions| xc_regions.init(raw_region_id, region.clone()));
+			.call(|xc_regions| xc_regions.init(Id::U128(raw_region_id), region.clone()));
 			let init_result = client.call(&ink_e2e::alice(), init, 0, None).await;
 			assert!(init_result.is_ok(), "Init should work");
 
@@ -448,7 +447,7 @@ pub mod xc_regions {
 				MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
 					contract_acc_id.clone(),
 				)
-				.call(|xc_regions| xc_regions.get_metadata(raw_region_id));
+				.call(|xc_regions| xc_regions.get_metadata(Id::U128(raw_region_id)));
 			let get_metadata_res =
 				client.call_dry_run(&ink_e2e::alice(), &get_metadata, 0, None).await;
 
@@ -504,14 +503,14 @@ pub mod xc_regions {
 			let init = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
 				contract_acc_id.clone(),
 			)
-			.call(|xc_regions| xc_regions.init(raw_region_id, region.clone()));
+			.call(|xc_regions| xc_regions.init(Id::U128(raw_region_id), region.clone()));
 			let init_result = client.call(&ink_e2e::alice(), init, 0, None).await;
 			assert!(init_result.is_ok(), "Init should succeed");
 
 			let remove = MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
 				contract_acc_id.clone(),
 			)
-			.call(|xc_regions| xc_regions.remove(raw_region_id));
+			.call(|xc_regions| xc_regions.remove(Id::U128(raw_region_id)));
 
 			let remove_result = client.call(&ink_e2e::alice(), remove, 0, None).await;
 			assert!(remove_result.is_ok(), "Remove should work");
@@ -538,7 +537,7 @@ pub mod xc_regions {
 				MessageBuilder::<ExtendedEnvironment, XcRegionsRef>::from_account_id(
 					contract_acc_id.clone(),
 				)
-				.call(|xc_regions| xc_regions.get_metadata(raw_region_id));
+				.call(|xc_regions| xc_regions.get_metadata(Id::U128(raw_region_id)));
 			let get_metadata_res =
 				client.call_dry_run(&ink_e2e::alice(), &get_metadata, 0, None).await;
 

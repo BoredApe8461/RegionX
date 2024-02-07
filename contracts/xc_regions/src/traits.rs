@@ -14,7 +14,8 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::types::{VersionedRegion, XcRegionsError};
-use primitives::coretime::{RawRegionId, Region};
+use openbrush::contracts::traits::psp34::Id;
+use primitives::coretime::Region;
 
 #[openbrush::wrapper]
 pub type RegionMetadataRef = dyn RegionMetadata;
@@ -23,11 +24,11 @@ pub type RegionMetadataRef = dyn RegionMetadata;
 #[openbrush::trait_definition]
 pub trait RegionMetadata {
 	#[ink(message)]
-	fn init(&mut self, id: RawRegionId, metadata: Region) -> Result<(), XcRegionsError>;
+	fn init(&mut self, id: Id, metadata: Region) -> Result<(), XcRegionsError>;
 
 	#[ink(message)]
-	fn get_metadata(&self, id: RawRegionId) -> Result<VersionedRegion, XcRegionsError>;
+	fn get_metadata(&self, id: Id) -> Result<VersionedRegion, XcRegionsError>;
 
 	#[ink(message)]
-	fn remove(&mut self, id: RawRegionId) -> Result<(), XcRegionsError>;
+	fn remove(&mut self, id: Id) -> Result<(), XcRegionsError>;
 }

@@ -145,9 +145,8 @@ pub mod coretime_market {
 		pub fn region_price(&self, id: Id) -> Result<Balance, MarketError> {
 			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
 
-			let metadata =
-				RegionMetadataRef::get_metadata(&self.config.xc_regions_contract, region_id)
-					.map_err(MarketError::XcRegionsMetadataError)?;
+			let metadata = RegionMetadataRef::get_metadata(&self.config.xc_regions_contract, id)
+				.map_err(MarketError::XcRegionsMetadataError)?;
 			let listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
 
 			self.calculate_region_price(metadata.region, listing)
@@ -183,7 +182,7 @@ pub mod coretime_market {
 
 			// Ensure that the region exists and its metadata is set.
 			let metadata =
-				RegionMetadataRef::get_metadata(&self.config.xc_regions_contract, region_id)
+				RegionMetadataRef::get_metadata(&self.config.xc_regions_contract, id.clone())
 					.map_err(MarketError::XcRegionsMetadataError)?;
 
 			let current_timeslice = self.current_timeslice();
@@ -245,7 +244,7 @@ pub mod coretime_market {
 
 			let listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
 			let metadata =
-				RegionMetadataRef::get_metadata(&self.config.xc_regions_contract, region_id)
+				RegionMetadataRef::get_metadata(&self.config.xc_regions_contract, id.clone())
 					.map_err(MarketError::XcRegionsMetadataError)?;
 
 			let current_timeslice = self.current_timeslice();
@@ -328,7 +327,7 @@ pub mod coretime_market {
 			let listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
 
 			let metadata =
-				RegionMetadataRef::get_metadata(&self.config.xc_regions_contract, region_id)
+				RegionMetadataRef::get_metadata(&self.config.xc_regions_contract, id.clone())
 					.map_err(MarketError::XcRegionsMetadataError)?;
 
 			let price = self.calculate_region_price(metadata.region, listing.clone())?;

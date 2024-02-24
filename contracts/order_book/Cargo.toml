@@ -1,0 +1,45 @@
+[package]
+name = "order_book"
+authors = ["RegionX <support@regionx.tech>"]
+version = "0.1.0"
+description = "Secondary Coretime marketpalce contract."
+edition = "2021"
+
+[dependencies]
+ink = { version = "4.2.1", default-features = false }
+
+scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+scale-info = { version = "2.6", default-features = false, features = ["derive"], optional = true }
+sp-arithmetic = { version = "23.0.0", default-features = false }
+
+# OpenBrush dependency
+openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = "develop", default-features = false, features=["psp34"] }
+
+environment = { path = "../../environment", default-features = false, features = ["ink"] }
+primitives = { path = "../../primitives", default-features = false  }
+block-number-extension = { path = "../../extension/block-number-extension", default-features = false, features = ["ink"]}
+xc_regions = { path = "../xc_regions", default-features = false, features = ["ink-as-dependency"] }
+
+[dev-dependencies]
+ink_e2e = "4.2.1"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = ["std"]
+std = [
+    "ink/std",
+    "primitives/std",
+    "scale/std",
+    "scale-info/std",
+    "sp-arithmetic/std",
+    "environment/ink-std",
+    "openbrush/std",
+    "xc_regions/std",
+]
+ink-as-dependency = []
+e2e-tests = []
+
+[profile.release]
+overflow-checks = false 

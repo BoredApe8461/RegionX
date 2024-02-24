@@ -131,8 +131,19 @@ pub mod coretime_market {
 		}
 
 		#[ink(message)]
-		pub fn listed_regions(&self) -> Vec<RawRegionId> {
-			self.listed_regions.clone()
+		pub fn listed_regions(&self, maybe_who: Option<AccountId>) -> Vec<RawRegionId> {
+			if let Some(who) = maybe_who {
+				self.listed_regions
+					.clone()
+					.into_iter()
+					.filter(|region_id| {
+						let Some(listing) = self.listings.get(region_id) else { return false };
+						listing.seller == who
+					})
+					.collect()
+			} else {
+				self.listed_regions.clone()
+			}
 		}
 
 		#[ink(message)]

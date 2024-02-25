@@ -45,6 +45,7 @@ pub mod coretime_market {
 		codegen::{EmitEvent, Env},
 		prelude::vec::Vec,
 		reflect::ContractEventBase,
+		storage::Lazy,
 		EnvAccess,
 	};
 	use openbrush::{contracts::traits::psp34::Id, storage::Mapping, traits::Storage};
@@ -61,7 +62,7 @@ pub mod coretime_market {
 		/// A mapping that holds information about each region listed on sale.
 		pub listings: Mapping<RawRegionId, Listing>,
 		/// A vector containing all the regions listed on sale.
-		pub listed_regions: Vec<RawRegionId>,
+		pub listed_regions: Lazy<Vec<RawRegionId>>,
 		/// The configuration of the market. Set on contract initialization. Can't be changed
 		/// afterwards.
 		pub config: Config,
@@ -134,7 +135,7 @@ pub mod coretime_market {
 		pub fn listed_regions(&self, maybe_who: Option<AccountId>) -> Vec<RawRegionId> {
 			if let Some(who) = maybe_who {
 				self.listed_regions
-					.clone()
+					.get_or_default()
 					.into_iter()
 					.filter(|region_id| {
 						let Some(listing) = self.listings.get(region_id) else { return false };
@@ -142,7 +143,7 @@ pub mod coretime_market {
 					})
 					.collect()
 			} else {
-				self.listed_regions.clone()
+				self.listed_regions.get_or_default()
 			}
 		}
 
@@ -226,7 +227,10 @@ pub mod coretime_market {
 					metadata_version: metadata.version,
 				},
 			);
-			self.listed_regions.push(region_id);
+
+			let mut listed_regions = self.listed_regions.get_or_default();
+			listed_regions.push(region_id);
+			self.listed_regions.set(&listed_regions);
 
 			self.emit_event(RegionListed {
 				region_id,
@@ -405,12 +409,14 @@ pub mod coretime_market {
 		fn remove_from_sale(&mut self, region_id: RawRegionId) -> Result<(), MarketError> {
 			let region_index = self
 				.listed_regions
+				.get_or_default()
 				.iter()
 				.position(|r| *r == region_id)
 				.ok_or(MarketError::RegionNotListed)?;
 
-			self.listed_regions.remove(region_index);
-			self.listings.remove(&region_id);
+			let mut listed_regions = self.listed_regions.get_or_default();
+			listed_regions.remove(region_index);
+			self.listed_regions.set(&listed_regions);
 
 			Ok(())
 		}
@@ -479,7 +485,7 @@ pub mod coretime_market {
 				MessageBuilder::<ExtendedEnvironment, CoretimeMarketRef>::from_account_id(
 					market_acc_id.clone(),
 				)
-				.call(|market| market.listed_regions());
+				.call(|market| market.listed_regions(None));
 			let listed_regions =
 				client.call_dry_run(&ink_e2e::alice(), &listed_regions, 0, None).await;
 			assert_eq!(listed_regions.return_value(), vec![]);

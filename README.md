@@ -32,6 +32,29 @@ An explanation of our solution for transferring the metadata of regions acrross 
 
 ### 2.2 Coretime Marketplace
 
+The RegionX Coretime market utilizes an order-book model and integrates directly with the XcRegions contract. For a region to be listed on the market, it must be represented within the XcRegion contract.
+
+The regions sold in the market are classified into two categories:
+- Active regions. The tasks that are assigned to active regions can currently be performed on a Polkadot core. 
+- Inactive regions. These are the regions that will become active in the upcoming Bulk period. The regions purchased from the Coretime chain fall into this category until the start of the next Bulk period.
+
+#### Region pricing
+
+The formula used to calculate the price of a region listed for sale is as follows:
+
+$$
+r_{price}=(r_{end}- t)*(tp * c_{occupancy})
+$$
+
+Where:
+- $r_{end}$: is the timeslice at which the region concludes
+- $t$: represents the current timeslice
+- $tp$: is the cost per timeslice defined by the seller upon listing the region on the market.
+- $c_{occupancy}$: represents the proportion of the Core that is occupied by the region.
+
+
+> The contract doesn't store the entire region's price; instead, it records the price of its timeslice, which is determined at the time of listing the region.
+
 ## 3. Develop
 
 1. Make sure to have the latest [cargo contract](https://crates.io/crates/cargo-contract).
@@ -63,19 +86,19 @@ cargo contract build --release
 
 4. Running e2e-tests
 
-Considering that the xc-regions contract necessitates the underlying chain to implement the uniques pallet for running e2e tests, it is required to specify a custom contracts node. For this purpose, we utilize the Astar local node from [Coretime-Mock](https://github.com/RegionX-Labs/Coretime-Mock) directory:
+Given that the xc-regions contract requires the underlying chain to implement the uniques pallet, specifying a custom contracts node is necessary when running e2e tests. For this purpose, we use the Astar local node from [Coretime-Mock](https://github.com/RegionX-Labs/Coretime-Mock) directory:
 
 ```sh
 export CONTRACTS_NODE="~/Coretime-Mock/bin/astar-collator"
 ```
 
-Once that is configured, we can proceed to run the e2e tests:"
+Once that is configured, we can proceed to run the e2e tests:
 
 ```sh
 cargo test --features e2e-tests
 ```
 
-Additionally, this repository contains e2e typescript tests, which can be run with the following steps:
+Additionally, this repository contains e2e typescript tests that can be executed using the steps below:
 
 ```sh
 # in a separate terminal run a the astar-collator node from Coretime-Mock 
@@ -101,9 +124,8 @@ For the xc-regions contract to function correctly, the chain on which it is depl
 ```rust
 #[derive(scale::Encode, scale::Decode)]
 pub enum RuntimeCall {
-	// E.g: on shibuya this is 37. in local-runtime this is 30.
 	#[codec(index = <CORRECT PALLET INDEX>)]
 	Uniques(uniques::UniquesCall),
 }
 ```
-   Once this is correctly configured, the contract can then be deployed.
+Once this is correctly configured, the contract can then be deployed.

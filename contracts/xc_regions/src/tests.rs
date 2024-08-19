@@ -157,7 +157,7 @@ fn remove_works() {
 
 	// Only charlie can remove the region:
 	set_caller::<DefaultEnvironment>(bob);
-	assert_eq!(xc_regions.remove(Id::U128(0)), Err(XcRegionsError::CannotRemove));
+	assert_eq!(xc_regions.remove(0), Err(XcRegionsError::CannotRemove));
 
 	set_caller::<DefaultEnvironment>(charlie);
 	// Removing a region works:

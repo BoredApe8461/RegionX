@@ -50,9 +50,7 @@ describe('Coretime market purchases', () => {
 
     const marketFactory = new Market_Factory(api, alice);
     market = new Market(
-
       (await marketFactory.new(xcRegions.address, LISTING_DEPOIST, TIMESLICE_PERIOD)).address,
-
       alice,
       api,
     );
@@ -62,10 +60,10 @@ describe('Coretime market purchases', () => {
     }
   });
 
-  it('Purchasing works', async () => {
+  it('Updating price works', async () => {
     const regionId: RegionId = {
       begin: 30,
-      core: 10,
+      core: 40,
       mask: CoreMask.completeMask(),
     };
     const regionRecord: RegionRecord = {
@@ -89,46 +87,28 @@ describe('Coretime market purchases', () => {
       .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
 
     await expectOnSale(market, id, alice, timeslicePrice);
-
     expect((await market.query.regionPrice(id)).value.unwrap().unwrap().toNumber()).to.be.equal(
-
       timeslicePrice * (region.getEnd() - region.getBegin()),
     );
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
 
-    const aliceBalance = await balanceOf(api, alice.address);
-    const bobBalance = await balanceOf(api, bob.address);
+    const newTimeslicePrice = 6 * Math.pow(10, 12);
 
-    const result = await market
-      .withSigner(bob)
-      .tx.purchaseRegion(id, 0, { value: timeslicePrice * (region.getEnd() - region.getBegin()) });
-    expectEvent(result, 'RegionPurchased', {
+    const result = await market.withSigner(alice).tx.updateRegionPrice(id, newTimeslicePrice);
+    expectEvent(result, 'RegionPriceUpdated', {
       regionId: id.toPrimitive().u128,
-      buyer: bob.address,
-      totalPrice: (timeslicePrice * (region.getEnd() - region.getBegin())).toString(),
+      newTimeslicePrice: newTimeslicePrice.toString(),
     });
-
-    // Bob receives the region:
-    expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(bob.address);
-
-    // Bob's balance is reduced:
-    expect(await balanceOf(api, bob.address)).to.be.lessThan(
-      bobBalance - timeslicePrice * (region.getEnd() - region.getBegin()),
+    await expectOnSale(market, id, alice, newTimeslicePrice);
+    expect((await market.query.regionPrice(id)).value.unwrap().unwrap().toNumber()).to.be.equal(
+      newTimeslicePrice * (region.getEnd() - region.getBegin()),
     );
-    // Alice's balance is increased.
-    expect(await balanceOf(api, alice.address)).to.be.greaterThan(aliceBalance);
-
-
-    // Ensure the region is removed from sale:
-    expect(market.query.listedRegions()).to.eventually.be.equal([]);
-    expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
-
   });
 
-  it('Purchasing fails when insufficient value is sent', async () => {
+  it('Cannot update price for unlisted region', async () => {
     const regionId: RegionId = {
       begin: 30,
-      core: 11,
+      core: 41,
       mask: CoreMask.completeMask(),
     };
     const regionRecord: RegionRecord = {
@@ -146,51 +126,17 @@ describe('Coretime market purchases', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    const timeslicePrice = 5 * Math.pow(10, 12);
-    await market
-      .withSigner(alice)
-      .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
+    const newTimeslicePrice = 6 * Math.pow(10, 12);
 
-    await expectOnSale(market, id, alice, timeslicePrice);
+    const result = await market.withSigner(alice).query.updateRegionPrice(id, newTimeslicePrice);
 
-    expect((await market.query.regionPrice(id)).value.unwrap().unwrap().toNumber()).to.be.equal(
-      timeslicePrice * (region.getEnd() - region.getBegin()),
-    );
-    expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
-
-    // Sending less tokens than supposed:
-    const result = await market.withSigner(bob).query.purchaseRegion(id, 0, {
-      value: timeslicePrice * (region.getEnd() - region.getBegin() - 1),
-    });
-    expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.InsufficientFunds());
-  });
-
-  it('Purchasing fails when region is not listed', async () => {
-    const regionId: RegionId = {
-      begin: 30,
-      core: 12,
-      mask: CoreMask.completeMask(),
-    };
-    const regionRecord: RegionRecord = {
-      end: 60,
-      owner: alice.address,
-      paid: null,
-    };
-    const region = new Region(regionId, regionRecord);
-    const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
-
-    const timeslicePrice = 5 * Math.pow(10, 12);
-
-    const result = await market.withSigner(bob).query.purchaseRegion(id, 0, {
-      value: timeslicePrice * (region.getEnd() - region.getBegin()),
-    });
     expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.RegionNotListed());
   });
 
-  it('Purchasing sends tokens to sale recepient instead of seller account', async () => {
+  it('Only owner can update the price', async () => {
     const regionId: RegionId = {
       begin: 30,
-      core: 13,
+      core: 42,
       mask: CoreMask.completeMask(),
     };
     const regionRecord: RegionRecord = {
@@ -208,41 +154,21 @@ describe('Coretime market purchases', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
-    const timeslicePrice = 5 * Math.pow(10, 12);
+    const timeslicePrice = 7 * Math.pow(10, 12);
     await market
       .withSigner(alice)
-      .tx.listRegion(id, timeslicePrice, charlie.address, { value: LISTING_DEPOIST });
+      .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
 
+    await expectOnSale(market, id, alice, timeslicePrice);
+    expect((await market.query.regionPrice(id)).value.unwrap().unwrap().toNumber()).to.be.equal(
+      timeslicePrice * (region.getEnd() - region.getBegin()),
+    );
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
 
-    const charlieBalance = await balanceOf(api, charlie.address);
-    const bobBalance = await balanceOf(api, bob.address);
+    const newTimeslicePrice = 6 * Math.pow(10, 12);
 
-    const result = await market
-      .withSigner(bob)
-      .tx.purchaseRegion(id, 0, { value: timeslicePrice * (region.getEnd() - region.getBegin()) });
-    expectEvent(result, 'RegionPurchased', {
-      regionId: id.toPrimitive().u128,
-      buyer: bob.address,
-      totalPrice: (timeslicePrice * (region.getEnd() - region.getBegin())).toString(),
-    });
+    const result = await market.withSigner(bob).query.updateRegionPrice(id, newTimeslicePrice);
 
-    // Bob receives the region:
-    expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.be.equal(bob.address);
-
-    // Bob's balance is reduced:
-    expect(await balanceOf(api, bob.address)).to.be.lessThan(
-      bobBalance - timeslicePrice * (region.getEnd() - region.getBegin()),
-    );
-    // Charlie's balance is increased.
-    expect(await balanceOf(api, charlie.address)).to.be.equal(
-      charlieBalance + timeslicePrice * (region.getEnd() - region.getBegin()),
-    );
-
-
-    // Ensure the region is removed from sale:
-    expect(market.query.listedRegions()).to.eventually.be.equal([]);
-    expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
-
+    expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.NotAllowed());
   });
 });

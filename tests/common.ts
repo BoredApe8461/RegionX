@@ -9,6 +9,7 @@ import { Region } from 'coretime-utils';
 const REGION_COLLECTION_ID = 42;
 
 export async function createRegionCollection(api: ApiPromise, caller: KeyringPair): Promise<void> {
+
   const createCollectionCall = api.tx.uniques.create(REGION_COLLECTION_ID, caller.address);
 
   const callTx = async (resolve: () => void, reject: ({ reason }) => void) => {
@@ -122,6 +123,7 @@ export async function balanceOf(api: ApiPromise, acc: string): Promise<number> {
   const account: any = (await api.query.system.account(acc)).toHuman();
   return parseHNString(account.data.free);
 }
+
 
 export async function getBlockNumber(api: ApiPromise): Promise<number> {
   const num = (await api.query.system.number()).toHuman();

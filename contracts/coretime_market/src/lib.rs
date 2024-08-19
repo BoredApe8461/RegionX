@@ -38,19 +38,25 @@ mod types;
 
 #[openbrush::contract(env = environment::ExtendedEnvironment)]
 pub mod coretime_market {
+
 	use crate::types::{Config, Listing, MarketError};
+
 	use block_number_extension::BlockNumberProviderExtension;
 	use environment::ExtendedEnvironment;
 	use ink::{
 		codegen::{EmitEvent, Env},
 		prelude::vec::Vec,
 		reflect::ContractEventBase,
+
 		storage::Lazy,
+
 		EnvAccess,
 	};
 	use openbrush::{contracts::traits::psp34::Id, storage::Mapping, traits::Storage};
 	use primitives::{
+
 		coretime::{RawRegionId, Region, Timeslice, CORE_MASK_BIT_LEN},
+
 		ensure, Version,
 	};
 	use sp_arithmetic::{traits::SaturatedConversion, FixedPointNumber, FixedU128};
@@ -59,6 +65,7 @@ pub mod coretime_market {
 	#[ink(storage)]
 	#[derive(Storage)]
 	pub struct CoretimeMarket {
+
 		/// A mapping that holds information about each region listed on sale.
 		pub listings: Mapping<RawRegionId, Listing>,
 		/// A vector containing all the regions listed on sale.
@@ -66,6 +73,7 @@ pub mod coretime_market {
 		/// The configuration of the market. Set on contract initialization. Can't be changed
 		/// afterwards.
 		pub config: Config,
+
 	}
 
 	#[ink(event)]
@@ -84,6 +92,7 @@ pub mod coretime_market {
 	}
 
 	#[ink(event)]
+
 	pub struct RegionUnlisted {
 		/// The identifier of the region that got unlisted from sale.
 		#[ink(topic)]
@@ -128,6 +137,7 @@ pub mod coretime_market {
 
 		#[ink(message)]
 		pub fn xc_regions_contract(&self) -> AccountId {
+
 			self.config.xc_regions_contract
 		}
 
@@ -145,6 +155,7 @@ pub mod coretime_market {
 			} else {
 				self.listed_regions.get_or_default()
 			}
+
 		}
 
 		#[ink(message)]
@@ -158,6 +169,7 @@ pub mod coretime_market {
 			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
 
 			let metadata = RegionMetadataRef::get_metadata(&self.config.xc_regions_contract, id)
+
 				.map_err(MarketError::XcRegionsMetadataError)?;
 			let listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
 
@@ -193,9 +205,11 @@ pub mod coretime_market {
 			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
 
 			// Ensure that the region exists and its metadata is set.
+
 			let metadata =
 				RegionMetadataRef::get_metadata(&self.config.xc_regions_contract, id.clone())
 					.map_err(MarketError::XcRegionsMetadataError)?;
+
 
 			let current_timeslice = self.current_timeslice();
 
@@ -203,7 +217,9 @@ pub mod coretime_market {
 			ensure!(metadata.region.end > current_timeslice, MarketError::RegionExpired);
 
 			ensure!(
+
 				self.env().transferred_value() == self.config.listing_deposit,
+
 				MarketError::MissingDeposit
 			);
 
@@ -215,6 +231,7 @@ pub mod coretime_market {
 				Default::default(),
 			)
 			.map_err(MarketError::XcRegionsPsp34Error)?;
+
 
 			let sale_recepient = sale_recepient.unwrap_or(caller);
 
@@ -228,9 +245,11 @@ pub mod coretime_market {
 				},
 			);
 
+
 			let mut listed_regions = self.listed_regions.get_or_default();
 			listed_regions.push(region_id);
 			self.listed_regions.set(&listed_regions);
+
 
 			self.emit_event(RegionListed {
 				region_id,
@@ -248,6 +267,7 @@ pub mod coretime_market {
 		/// ## Arguments:
 		/// - `region_id`: The `u128` encoded identifier of the region that the caller intends to
 		///   unlist from sale.
+
 		///
 		/// In case the region is expired, this is callable by anyone and the caller will receive
 		/// the listing deposit as a reward.
@@ -294,12 +314,14 @@ pub mod coretime_market {
 		}
 
 		/// A function for updating a listed region's price.
+
 		///
 		/// ## Arguments:
 		/// - `region_id`: The `u128` encoded identifier of the region being listed for sale.
 		/// - `timeslice_price`: The new per timeslice price of the region.
 		#[ink(message)]
 		pub fn update_region_price(
+
 			&mut self,
 			id: Id,
 			new_timeslice_price: Balance,
@@ -317,6 +339,7 @@ pub mod coretime_market {
 
 			self.emit_event(RegionPriceUpdated { region_id, new_timeslice_price });
 			Ok(())
+
 		}
 
 		/// A function for purchasing a region listed on sale.
@@ -341,9 +364,11 @@ pub mod coretime_market {
 			let Id::U128(region_id) = id else { return Err(MarketError::InvalidRegionId) };
 			let listing = self.listings.get(&region_id).ok_or(MarketError::RegionNotListed)?;
 
+
 			let metadata =
 				RegionMetadataRef::get_metadata(&self.config.xc_regions_contract, id.clone())
 					.map_err(MarketError::XcRegionsMetadataError)?;
+
 
 			let price = self.calculate_region_price(metadata.region, listing.clone())?;
 			ensure!(transferred_value >= price, MarketError::InsufficientFunds);
@@ -351,6 +376,7 @@ pub mod coretime_market {
 			ensure!(listing.metadata_version == metadata_version, MarketError::MetadataNotMatching);
 
 			// Transfer the region to the buyer.
+
 			PSP34Ref::transfer(
 				&self.config.xc_regions_contract,
 				caller,
@@ -361,6 +387,7 @@ pub mod coretime_market {
 
 			// Remove the region from sale:
 			self.remove_from_sale(region_id)?;
+
 
 			// Transfer the tokens to the sale recipient.
 			self.env()
@@ -421,17 +448,22 @@ pub mod coretime_market {
 			Ok(())
 		}
 
+
 		#[cfg(not(test))]
 		pub(crate) fn current_timeslice(&self) -> Timeslice {
 			let latest_rc_block =
 				self.env().extension().relay_chain_block_number().unwrap_or_default();
+
 			(latest_rc_block / self.config.timeslice_period).saturated_into()
+
 		}
 
 		#[cfg(test)]
 		pub(crate) fn current_timeslice(&self) -> Timeslice {
 			let latest_block = self.env().block_number();
+
 			(latest_block / self.config.timeslice_period).saturated_into()
+
 		}
 
 		fn emit_event<Event: Into<<CoretimeMarket as ContractEventBase>::Type>>(&self, e: Event) {
@@ -447,7 +479,9 @@ pub mod coretime_market {
 		use super::*;
 		use environment::ExtendedEnvironment;
 		use ink_e2e::MessageBuilder;
+
 		use primitives::coretime::TIMESLICE_PERIOD;
+
 		use xc_regions::xc_regions::XcRegionsRef;
 
 		type E2EResult<T> = Result<T, Box<dyn std::error::Error>>;
@@ -463,8 +497,10 @@ pub mod coretime_market {
 				.expect("instantiate failed")
 				.account_id;
 
+
 			let constructor =
 				CoretimeMarketRef::new(xc_regions_acc_id, REQUIRED_DEPOSIT, TIMESLICE_PERIOD);
+
 			let market_acc_id = client
 				.instantiate("coretime-market", &ink_e2e::alice(), constructor, 0, None)
 				.await
@@ -485,7 +521,9 @@ pub mod coretime_market {
 				MessageBuilder::<ExtendedEnvironment, CoretimeMarketRef>::from_account_id(
 					market_acc_id.clone(),
 				)
+
 				.call(|market| market.listed_regions(None));
+
 			let listed_regions =
 				client.call_dry_run(&ink_e2e::alice(), &listed_regions, 0, None).await;
 			assert_eq!(listed_regions.return_value(), vec![]);

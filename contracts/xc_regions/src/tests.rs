@@ -85,6 +85,7 @@ fn init_works() {
 	let contract = ink::env::account_id::<ink::env::DefaultEnvironment>();
 
 	// 1. Cannot initialize a region that doesn't exist:
+
 	assert_eq!(
 		xc_regions.init(Id::U128(0), Region::default()),
 		Err(XcRegionsError::CannotInitialize)
@@ -94,6 +95,7 @@ fn init_works() {
 	assert_ok!(xc_regions.mint(region_id(0), charlie));
 
 	set_caller::<DefaultEnvironment>(bob);
+
 	assert_eq!(
 		xc_regions.init(Id::U128(0), Region::default()),
 		Err(XcRegionsError::CannotInitialize)
@@ -102,6 +104,7 @@ fn init_works() {
 	set_caller::<DefaultEnvironment>(charlie);
 	// 3. Initialization doesn't work with incorrect metadata:
 	let invalid_metadata = Region { begin: 1, end: 2, core: 0, mask: Default::default() };
+
 	assert_eq!(
 		xc_regions.init(Id::U128(0), invalid_metadata),
 		Err(XcRegionsError::InvalidMetadata)
@@ -109,6 +112,7 @@ fn init_works() {
 
 	// 4. Initialization works with correct metadata and the right caller:
 	assert_ok!(xc_regions.init(Id::U128(0), Region::default()));
+
 
 	// The region gets transferred to the contract:
 	assert_eq!(xc_regions._uniques_owner(0), Some(contract));
@@ -124,6 +128,7 @@ fn init_works() {
 	assert_init_event(&emitted_events.last().unwrap(), 0, Region::default(), 0);
 
 	// 5. Calling init for an already initialized region will fail.
+
 	assert_eq!(
 		xc_regions.init(Id::U128(0), Region::default()),
 		Err(XcRegionsError::CannotInitialize)
@@ -139,6 +144,7 @@ fn remove_works() {
 	let contract = ink::env::account_id::<ink::env::DefaultEnvironment>();
 
 	// Cannot remove a region that doesn't exist.
+
 	assert_eq!(xc_regions.remove(Id::U128(0)), Err(XcRegionsError::CannotRemove));
 
 	// Minting and initializing a region:
@@ -161,6 +167,7 @@ fn remove_works() {
 
 	set_caller::<DefaultEnvironment>(charlie);
 	// Removing a region works:
+
 	assert_ok!(xc_regions.remove(Id::U128(0)));
 
 	// The region gets transferred back to Charlie and the wrapped region gets burned.
@@ -184,6 +191,7 @@ fn get_metadata_works() {
 	set_caller::<DefaultEnvironment>(charlie);
 
 	// Cannot get the metadata of a region that doesn't exist:
+
 	assert_eq!(xc_regions.get_metadata(Id::U128(0)), Err(XcRegionsError::MetadataNotFound));
 
 	// Minting a region without initializing it.
@@ -193,6 +201,7 @@ fn get_metadata_works() {
 	assert_ok!(xc_regions.init(Id::U128(0), Region::default()));
 	assert_eq!(
 		xc_regions.get_metadata(Id::U128(0)),
+
 		Ok(VersionedRegion { version: 0, region: Region::default() })
 	);
 }
@@ -204,6 +213,7 @@ fn metadata_version_gets_updated() {
 	set_caller::<DefaultEnvironment>(charlie);
 
 	assert_ok!(xc_regions.mint(region_id(0), charlie));
+
 	assert_ok!(xc_regions.init(Id::U128(0), Region::default()));
 	assert_eq!(
 		xc_regions.get_metadata(Id::U128(0)),

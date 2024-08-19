@@ -50,7 +50,9 @@ describe('Coretime market purchases', () => {
 
     const marketFactory = new Market_Factory(api, alice);
     market = new Market(
+
       (await marketFactory.new(xcRegions.address, LISTING_DEPOIST, TIMESLICE_PERIOD)).address,
+
       alice,
       api,
     );
@@ -87,7 +89,9 @@ describe('Coretime market purchases', () => {
       .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
 
     await expectOnSale(market, id, alice, timeslicePrice);
+
     expect((await market.query.regionPrice(id)).value.unwrap().unwrap().toNumber()).to.be.equal(
+
       timeslicePrice * (region.getEnd() - region.getBegin()),
     );
     expect((await xcRegions.query.ownerOf(id)).value.unwrap()).to.deep.equal(market.address);
@@ -114,9 +118,11 @@ describe('Coretime market purchases', () => {
     // Alice's balance is increased.
     expect(await balanceOf(api, alice.address)).to.be.greaterThan(aliceBalance);
 
+
     // Ensure the region is removed from sale:
     expect(market.query.listedRegions()).to.eventually.be.equal([]);
     expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
+
   });
 
   it('Purchasing fails when insufficient value is sent', async () => {
@@ -146,6 +152,7 @@ describe('Coretime market purchases', () => {
       .tx.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
 
     await expectOnSale(market, id, alice, timeslicePrice);
+
     expect((await market.query.regionPrice(id)).value.unwrap().unwrap().toNumber()).to.be.equal(
       timeslicePrice * (region.getEnd() - region.getBegin()),
     );
@@ -232,8 +239,10 @@ describe('Coretime market purchases', () => {
       charlieBalance + timeslicePrice * (region.getEnd() - region.getBegin()),
     );
 
+
     // Ensure the region is removed from sale:
     expect(market.query.listedRegions()).to.eventually.be.equal([]);
     expect((await market.query.listedRegion(id)).value.unwrap().ok).to.be.equal(null);
+
   });
 });

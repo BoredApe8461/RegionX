@@ -14,6 +14,7 @@
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::types::{VersionedRegion, XcRegionsError};
+
 use openbrush::contracts::traits::psp34::Id;
 use primitives::coretime::Region;
 

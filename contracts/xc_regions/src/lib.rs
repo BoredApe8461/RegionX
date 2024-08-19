@@ -130,10 +130,12 @@ pub mod xc_regions {
 		/// ## Events:
 		/// On success this ink message emits the `RegionInitialized` event.
 		#[ink(message)]
+
 		fn init(&mut self, id: Id, region: Region) -> Result<(), XcRegionsError> {
 			let caller = self.env().caller();
 
 			let Id::U128(raw_region_id) = id else { return Err(XcRegionsError::InvalidRegionId) };
+
 			ensure!(
 				Some(caller) == self._uniques_owner(raw_region_id),
 				XcRegionsError::CannotInitialize
@@ -183,6 +185,7 @@ pub mod xc_regions {
 		/// ## Arguments:
 		/// - `raw_region_id` - The `u128` encoded region identifier.
 		#[ink(message)]
+
 		fn get_metadata(&self, id: Id) -> Result<VersionedRegion, XcRegionsError> {
 			let Id::U128(region_id) = id else { return Err(XcRegionsError::InvalidRegionId) };
 			let Some(region) = self.regions.get(region_id) else {
@@ -211,8 +214,10 @@ pub mod xc_regions {
 		/// ## Events:
 		/// On success this ink message emits the `RegionRemoved` event.
 		#[ink(message)]
+
 		fn remove(&mut self, id: Id) -> Result<(), XcRegionsError> {
 			let Id::U128(region_id) = id else { return Err(XcRegionsError::InvalidRegionId) };
+
 			let owner =
 				psp34::PSP34Impl::owner_of(self, id.clone()).ok_or(XcRegionsError::CannotRemove)?;
 

@@ -10,6 +10,7 @@ import { CoreMask, Id, Region, RegionId, RegionRecord } from 'coretime-utils';
 import { MarketErrorBuilder, PSP34ErrorBuilder } from '../../types/types-returns/coretime_market';
 import {
   approveTransfer,
+
   balanceOf,
   createRegionCollection,
   expectEvent,
@@ -93,6 +94,7 @@ describe('Coretime market listing', () => {
     });
 
     await expectOnSale(market, id, alice, timeslicePrice);
+
     expect((await market.query.regionPrice(id)).value.unwrap().unwrap().toNumber()).to.be.equal(
       timeslicePrice * (region.getEnd() - region.getBegin()),
     );
@@ -122,10 +124,12 @@ describe('Coretime market listing', () => {
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
     const timeslicePrice = 50;
+
     const result = await market
       .withSigner(alice)
       .query.listRegion(id, timeslicePrice, alice.address);
     expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.MissingDeposit());
+
   });
 
   it('Listing requires region to be approved to the market', async () => {
@@ -178,6 +182,7 @@ describe('Coretime market listing', () => {
     const id: any = api.createType('Id', { U128: region.getEncodedRegionId(api) });
     await xcRegions.withSigner(alice).tx.approve(market.address, id, true);
 
+
     // Wait for the region to expire.
     await wait(2000 * TIMESLICE_PERIOD);
 
@@ -186,5 +191,6 @@ describe('Coretime market listing', () => {
       .withSigner(alice)
       .query.listRegion(id, timeslicePrice, alice.address, { value: LISTING_DEPOIST });
     expect(result.value.unwrap().err).to.deep.equal(MarketErrorBuilder.RegionExpired());
+
   });
 });

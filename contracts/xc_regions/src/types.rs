@@ -19,6 +19,7 @@ use primitives::{coretime::Region, Version};
 #[derive(scale::Decode, scale::Encode, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub enum XcRegionsError {
+
 	/// The provided identifier is not a valid region id.
 	InvalidRegionId,
 	/// The metadata is either already initialized or the caller isn't the region owner.

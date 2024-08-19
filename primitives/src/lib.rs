@@ -20,14 +20,13 @@ pub mod macros;
 pub mod uniques;
 
 /// Balance of an account.
-pub type Balance = u64;
+pub type Balance = u128;
 
 /// The type used for versioning metadata.
 pub type Version = u32;
 
 #[derive(scale::Encode, scale::Decode)]
 pub enum RuntimeCall {
-	// NOTE: on shibuya this is 37. in local-runtime this is 30.
-	#[codec(index = 30)]
+	#[codec(index = 37)]
 	Uniques(uniques::UniquesCall),
 }

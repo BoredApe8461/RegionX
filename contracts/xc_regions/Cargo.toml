@@ -1,5 +1,5 @@
 [package]
-name = "xc-regions"
+name = "xc_regions"
 authors = ["RegionX <support@regionx.tech>"]
 version = "0.1.0"
 description = "Cross-chain Regions contracts."

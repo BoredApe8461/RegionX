@@ -26,8 +26,6 @@ pub enum XcRegionsError {
 	/// The region metadata cannot be removed as long as the underlying region continues to exist
 	/// on this chain.
 	CannotRemove,
-	/// The region is non existant.
-	RegionNotFound,
 	/// No metadata was found for the region.
 	MetadataNotFound,
 	/// The provided metadata doesn't match with the metadata extracted from the region id.
@@ -36,8 +34,6 @@ pub enum XcRegionsError {
 	VersionNotFound,
 	/// An error occured in the underlying runtime.
 	RuntimeError,
-	/// The operation is not supported.
-	NotSupported,
 	/// An psp34 error occured.
 	Psp34(PSP34Error),
 }
@@ -48,12 +44,10 @@ impl core::fmt::Display for XcRegionsError {
 			XcRegionsError::InvalidRegionId => write!(f, "InvalidRegionId"),
 			XcRegionsError::CannotInitialize => write!(f, "CannotInitialize"),
 			XcRegionsError::CannotRemove => write!(f, "CannotRemove"),
-			XcRegionsError::RegionNotFound => write!(f, "RegionNotFound"),
 			XcRegionsError::MetadataNotFound => write!(f, "MetadataNotFound"),
 			XcRegionsError::InvalidMetadata => write!(f, "InvalidMetadata"),
 			XcRegionsError::VersionNotFound => write!(f, "VersionNotFound"),
 			XcRegionsError::RuntimeError => write!(f, "RuntimeError"),
-			XcRegionsError::NotSupported => write!(f, "NotSupported"),
 			XcRegionsError::Psp34(err) => write!(f, "{:?}", err),
 		}
 	}

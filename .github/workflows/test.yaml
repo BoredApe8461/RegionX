@@ -68,7 +68,7 @@ jobs:
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1
         with:
-          version: "0.21.0"
+          version: '0.21.0'
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3.1.0
@@ -96,7 +96,7 @@ jobs:
 
       - name: Ensure clippy is happy
         run: cargo clippy -- -D warnings
-  
+
   build:
     needs: install
     runs-on: ubuntu-latest

@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
+use openbrush::traits::BlockNumber;
+
 /// The type used for identifying regions.
 ///
 /// This `u128` actually holds parts of the region metadata.
@@ -24,11 +26,39 @@ pub type Timeslice = u32;
 /// Index of a Polkadot Core.
 pub type CoreIndex = u16;
 
+/// Duration of a timeslice in rc blocks.
+pub const TIMESLICE_PERIOD: BlockNumber = 80;
+
+/// The bit length of a core mask.
+pub const CORE_MASK_BIT_LEN: usize = 80;
+
 /// All Regions are also associated with a Core Mask, an 80-bit bitmap, to denote the regularity at
 /// which it may be scheduled on the core.
 #[derive(scale::Decode, scale::Encode, Default, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
 pub struct CoreMask([u8; 10]);
+
+impl CoreMask {
+	pub fn void() -> Self {
+		Self([0u8; 10])
+	}
+	pub fn complete() -> Self {
+		Self([255u8; 10])
+	}
+	pub fn count_zeros(&self) -> u32 {
+		self.0.iter().map(|i| i.count_zeros()).sum()
+	}
+	pub fn count_ones(&self) -> u32 {
+		self.0.iter().map(|i| i.count_ones()).sum()
+	}
+	pub fn from_chunk(from: u32, to: u32) -> Self {
+		let mut v = [0u8; 10];
+		for i in (from.min(80) as usize)..(to.min(80) as usize) {
+			v[i / 8] |= 128 >> (i % 8);
+		}
+		Self(v)
+	}
+}
 
 impl From<u128> for CoreMask {
 	fn from(x: u128) -> Self {
